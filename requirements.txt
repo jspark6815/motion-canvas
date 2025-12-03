@@ -1,0 +1,16 @@
+# 라즈베리파이 측 요구사항
+opencv-python>=4.8.0
+mediapipe>=0.10.0
+numpy>=1.24.0
+requests>=2.31.0
+
+# 서버 측 요구사항
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+torch>=2.0.0
+torchvision>=0.15.0
+pillow>=10.0.0
+git+https://github.com/openai/CLIP.git
+diffusers>=0.21.0
+transformers>=4.35.0
+
