@@ -27,12 +27,12 @@ class ImageGenerator:
         try:
             if self.model_type == "sdxl":
                 from diffusers import StableDiffusionXLPipeline
-                # SDXL 모델 로드 (실제 모델 경로로 변경 필요)
-                # self.pipeline = StableDiffusionXLPipeline.from_pretrained(
-                #     "stabilityai/stable-diffusion-xl-base-1.0",
-                #     torch_dtype=torch.float16 if self.device == "cuda" else torch.float32
-                # )
-                # self.pipeline = self.pipeline.to(self.device)
+                #SDXL 모델 로드 (실제 모델 경로로 변경 필요)
+                self.pipeline = StableDiffusionXLPipeline.from_pretrained(
+                    "stabilityai/stable-diffusion-xl-base-1.0",
+                    torch_dtype=torch.float16 if self.device == "cuda" else torch.float32
+                )
+                self.pipeline = self.pipeline.to(self.device)
                 print(f"SDXL 모델 로드 준비 완료 (device: {self.device})")
                 
             elif self.model_type == "flux":
