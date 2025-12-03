@@ -53,12 +53,19 @@ project/
 ### 라즈베리파이 측 (raspberry/)
 
 ```bash
-# 필요한 패키지 설치
-pip install opencv-python mediapipe numpy requests
+# 프로젝트 가져오기
+cd motion-canvas
+git pull origin main
+cd raspberry
+
+# 환경 설정 (자동)
+./setup.sh
+
+# 서버 URL 설정 (main.py에서 서버 IP로 변경)
+# SERVER_URL = "http://192.168.1.100:8000"
 
 # 실행
-cd raspberry
-python main.py
+./start.sh
 ```
 
 ### 서버 측 (server/)
@@ -108,6 +115,20 @@ python app.py
 2. Git에 커밋 및 푸시
 3. 라즈베리파이에서 Git pull
 4. 라즈베리파이에서 실행
+
+## 네트워크 설정
+
+**중요**: 노트북과 라즈베리파이는 **같은 네트워크**(같은 Wi-Fi)에 연결되어 있어야 합니다.
+
+1. 노트북에서 서버 실행 후 IP 주소 확인:
+   ```bash
+   ifconfig | grep "inet " | grep -v 127.0.0.1
+   ```
+
+2. `raspberry/main.py`에서 서버 URL 변경:
+   ```python
+   SERVER_URL = "http://192.168.1.100:8000"  # 노트북 IP로 변경
+   ```
 
 ## 주의사항
 
