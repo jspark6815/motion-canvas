@@ -46,6 +46,9 @@ pip install numpy > /dev/null 2>&1 || echo "   ⚠ numpy 설치 실패 (계속 �
 echo "   - requests"
 pip install requests > /dev/null 2>&1 || echo "   ⚠ requests 설치 실패 (계속 진행)"
 
+echo "   - pillow (한글 폰트 지원)"
+pip install pillow > /dev/null 2>&1 || echo "   ⚠ pillow 설치 실패 (계속 진행)"
+
 echo "   ✓ 패키지 설치 완료"
 
 # 5. 설치 확인
@@ -55,6 +58,7 @@ python3 -c "import cv2; print('   ✓ OpenCV:', cv2.__version__)" 2>/dev/null ||
 python3 -c "import mediapipe; print('   ✓ MediaPipe 설치됨')" 2>/dev/null || echo "   ⚠ MediaPipe 확인 실패"
 python3 -c "import numpy; print('   ✓ NumPy:', numpy.__version__)" 2>/dev/null || echo "   ⚠ NumPy 확인 실패"
 python3 -c "import requests; print('   ✓ Requests:', requests.__version__)" 2>/dev/null || echo "   ⚠ Requests 확인 실패"
+python3 -c "from PIL import Image; print('   ✓ Pillow 설치됨')" 2>/dev/null || echo "   ⚠ Pillow 확인 실패"
 
 echo ""
 echo "=== 환경 설정 완료 ==="
