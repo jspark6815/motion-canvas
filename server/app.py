@@ -18,8 +18,9 @@ from server.services.analyzer import analyzer
 from server.services.generator import generator
 from datetime import datetime
 
-# 환경 변수 로드
-load_dotenv()
+# 환경 변수 로드 (.env 경로 명시)
+# 프로젝트 루트에서 실행해도 server/.env를 읽도록 절대경로 지정
+load_dotenv(dotenv_path=Path(__file__).parent / ".env")
 
 
 @asynccontextmanager
