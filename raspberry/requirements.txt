@@ -1,0 +1,17 @@
+# 라즈베리파이 의존성
+# 기본 요청 라이브러리
+requests>=2.31.0
+
+# 이미지 처리
+numpy>=1.24.0
+Pillow>=10.0.0
+
+# 라즈베리파이 카메라 (Pi에서만 설치)
+# picamera2>=0.3.12
+
+# MediaPipe (사람 감지)
+mediapipe>=0.10.8
+
+# 선택적: OpenCV (이미지 처리 대안)
+# opencv-python-headless>=4.8.0
+

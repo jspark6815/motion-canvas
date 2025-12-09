@@ -1,0 +1,193 @@
+"""
+라즈베리파이 메인 실행 파일
+사람 감지 시 자동으로 사진을 촬영하여 서버에 업로드합니다.
+"""
+import time
+import signal
+import sys
+from typing import Optional
+
+from raspberry.config import camera_config, detection_config, server_config
+from raspberry.camera.picam_source import PiCameraSource
+from raspberry.vision.person_detector import PersonDetector
+from raspberry.vision.segmentation import ImageSegmenter
+from raspberry.network.api_client import APIClient
+from raspberry.utils.image_encode import encode_jpeg, generate_filename
+
+
+class AIArtCapture:
+    """AI 아트 캡처 시스템 메인 클래스"""
+    
+    def __init__(self) -> None:
+        self.camera: Optional[PiCameraSource] = None
+        self.detector: Optional[PersonDetector] = None
+        self.segmenter: Optional[ImageSegmenter] = None
+        self.api_client: Optional[APIClient] = None
+        
+        self._running: bool = False
+        self._last_capture_time: float = 0
+    
+    def initialize(self) -> bool:
+        """시스템 초기화"""
+        print("=" * 50)
+        print("🎨 AI Art Capture System 초기화 중...")
+        print("=" * 50)
+        
+        try:
+            # 카메라 초기화
+            self.camera = PiCameraSource(camera_config)
+            self.camera.start()
+            
+            # 사람 감지기 초기화
+            self.detector = PersonDetector(detection_config)
+            self.detector.initialize()
+            
+            # 세그멘터 초기화
+            self.segmenter = ImageSegmenter()
+            
+            # API 클라이언트 초기화
+            self.api_client = APIClient(server_config)
+            
+            # 서버 연결 확인
+            if self.api_client.check_health():
+                print(f"✅ 서버 연결 성공: {server_config.base_url}")
+            else:
+                print(f"⚠️ 서버 연결 실패: {server_config.base_url}")
+                print("   서버가 실행 중인지 확인하세요.")
+            
+            print("✅ 시스템 초기화 완료")
+            return True
+            
+        except Exception as e:
+            print(f"❌ 초기화 실패: {e}")
+            return False
+    
+    def cleanup(self) -> None:
+        """리소스 정리"""
+        print("\n🔄 시스템 종료 중...")
+        
+        if self.camera:
+            self.camera.stop()
+        if self.detector:
+            self.detector.release()
+        if self.api_client:
+            self.api_client.close()
+        
+        print("✅ 정리 완료")
+    
+    def _can_capture(self) -> bool:
+        """쿨다운 확인"""
+        current_time = time.time()
+        elapsed = current_time - self._last_capture_time
+        return elapsed >= detection_config.cooldown_seconds
+    
+    def _process_frame(self) -> bool:
+        """
+        단일 프레임 처리
+        
+        Returns:
+            사람 감지 및 업로드 성공 여부
+        """
+        if not self.camera or not self.detector or not self.segmenter:
+            return False
+        
+        # 프레임 캡처
+        frame = self.camera.capture()
+        if frame is None:
+            return False
+        
+        # 사람 감지
+        detections = self.detector.detect(frame)
+        
+        if not detections:
+            return False
+        
+        if not self._can_capture():
+            print("⏳ 쿨다운 중...")
+            return False
+        
+        print(f"👤 사람 감지! (신뢰도: {detections[0].confidence:.2f})")
+        
+        # 바운딩 박스 크롭
+        bbox = detections[0]
+        cropped = self.segmenter.crop_bbox(frame, bbox)
+        
+        # 패딩 추가
+        processed = self.segmenter.add_padding(cropped, padding=10)
+        
+        # JPEG 인코딩
+        image_bytes = encode_jpeg(processed, quality=90)
+        if not image_bytes:
+            print("❌ 이미지 인코딩 실패")
+            return False
+        
+        # 서버 업로드
+        filename = generate_filename()
+        print(f"📤 업로드 중: {filename}")
+        
+        if self.api_client:
+            response = self.api_client.upload_image(image_bytes, filename)
+            
+            if response.success:
+                print(f"✅ 업로드 성공! ID: {response.image_id}")
+                self._last_capture_time = time.time()
+                return True
+            else:
+                print(f"❌ 업로드 실패: {response.error}")
+        
+        return False
+    
+    def run(self) -> None:
+        """메인 루프 실행"""
+        self._running = True
+        
+        print("\n" + "=" * 50)
+        print("🚀 캡처 시스템 시작")
+        print(f"   - 촬영 간격: {camera_config.capture_interval}초")
+        print(f"   - 쿨다운: {detection_config.cooldown_seconds}초")
+        print("   - 종료: Ctrl+C")
+        print("=" * 50 + "\n")
+        
+        while self._running:
+            try:
+                self._process_frame()
+                time.sleep(camera_config.capture_interval)
+                
+            except KeyboardInterrupt:
+                print("\n⚠️ 사용자 중단 요청...")
+                break
+            except Exception as e:
+                print(f"❌ 오류 발생: {e}")
+                time.sleep(1)
+        
+        self._running = False
+    
+    def stop(self) -> None:
+        """실행 중지"""
+        self._running = False
+
+
+def signal_handler(signum, frame):
+    """시그널 핸들러"""
+    print("\n🛑 종료 시그널 수신...")
+    sys.exit(0)
+
+
+def main() -> None:
+    """메인 함수"""
+    # 시그널 핸들러 등록
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
+    # 시스템 생성 및 실행
+    system = AIArtCapture()
+    
+    try:
+        if system.initialize():
+            system.run()
+    finally:
+        system.cleanup()
+
+
+if __name__ == "__main__":
+    main()
