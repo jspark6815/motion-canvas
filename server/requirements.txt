@@ -1,0 +1,24 @@
+# FastAPI 서버 의존성
+
+# 웹 프레임워크
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+
+# 데이터 검증
+pydantic>=2.5.0
+
+# 환경 변수
+python-dotenv>=1.0.0
+
+# 이미지 처리
+Pillow>=10.0.0
+
+# Gemini API (5단계에서 활성화)
+google-generativeai>=0.3.0
+
+# 파일 업로드
+python-multipart>=0.0.6
+
+# 비동기 HTTP 클라이언트 (선택)
+httpx>=0.25.0
+
