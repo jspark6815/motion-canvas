@@ -23,6 +23,7 @@ class ImageAnalyzer:
         self._model: Optional[object] = None
         self._initialized: bool = False
         self._use_api: bool = False
+        self._model_name: str = os.getenv("GEMINI_VISION_MODEL", "models/gemini-1.5-flash-latest")
     
     def initialize(self) -> bool:
         """
@@ -47,7 +48,7 @@ class ImageAnalyzer:
         
         try:
             genai.configure(api_key=api_key)
-            self._model = genai.GenerativeModel('gemini-1.5-flash')
+            self._model = genai.GenerativeModel(self._model_name)
             self._initialized = True
             self._use_api = True
             print("[Analyzer] Gemini Vision API 초기화 완료")

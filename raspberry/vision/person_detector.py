@@ -109,13 +109,13 @@ class PersonDetector:
             # scale: 이미지 스케일 (1.05는 적당한 속도와 정확도 균형)
             # hitThreshold: 기본값 사용
             # finalThreshold: 최소 감지 임계값 (낮을수록 더 많이 감지)
+            # 일부 OpenCV 버전에서는 finalThreshold 키워드가 지원되지 않으므로
+            # 최소한의 인자만 사용합니다.
             (rects, weights) = self._detector.detectMultiScale(
                 bgr_frame,
                 winStride=(4, 4),
                 padding=(8, 8),
                 scale=1.05,
-                hitThreshold=0.0,  # 기본값 사용
-                finalThreshold=2.0  # 최소 감지 임계값
             )
             
             detections = []
@@ -123,7 +123,8 @@ class PersonDetector:
             
             for i, (x, y, width, height) in enumerate(rects):
                 # weights는 감지 신뢰도 (높을수록 확실함)
-                confidence = float(weights[i]) if i < len(weights) else 0.5
+                # 일부 버전에서 weights가 튜플/리스트가 아닐 수 있으니 방어적으로 처리
+                confidence = float(weights[i]) if (isinstance(weights, (list, tuple)) and i < len(weights)) else 0.5
                 
                 # 신뢰도 필터링
                 if confidence < self.config.min_detection_confidence:

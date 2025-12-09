@@ -30,6 +30,8 @@ class ImageGenerator:
         self._imagen_model: Optional[object] = None
         self._initialized: bool = False
         self._use_api: bool = False
+        self._model_name: str = os.getenv("GEMINI_VISION_MODEL", "models/gemini-1.5-flash-latest")
+        self._imagen_name: str = os.getenv("GEMINI_IMAGE_MODEL", "imagen-3.0-generate-001")
     
     def initialize(self) -> bool:
         """
@@ -56,15 +58,15 @@ class ImageGenerator:
             genai.configure(api_key=api_key)
             
             # Gemini Pro Vision 모델 (프롬프트 개선용)
-            self._model = genai.GenerativeModel('gemini-1.5-flash')
+            self._model = genai.GenerativeModel(self._model_name)
             
             # Imagen 모델 사용 시도 (이미지 생성용)
             # 참고: Imagen API가 사용 가능한 경우에만 동작
             try:
-                self._imagen_model = genai.ImageGenerationModel("imagen-3.0-generate-001")
-                print("[Generator] Imagen 3 모델 사용 가능")
+                self._imagen_model = genai.ImageGenerationModel(self._imagen_name)
+                print(f"[Generator] Imagen 모델 사용 가능: {self._imagen_name}")
             except Exception:
-                print("[Generator] Imagen 모델을 사용할 수 없습니다. 텍스트 프롬프트만 생성합니다.")
+                print(f"[Generator] Imagen 모델을 사용할 수 없습니다: {self._imagen_name}. 텍스트 프롬프트만 생성합니다.")
                 self._imagen_model = None
             
             self._initialized = True
