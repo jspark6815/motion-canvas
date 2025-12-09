@@ -75,6 +75,16 @@ export default function Layout() {
                 갤러리
               </Link>
               <Link
+                to="/stream"
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  isActive('/stream')
+                    ? 'bg-primary-500/10 text-primary-400'
+                    : 'text-dark-300 hover:text-white hover:bg-dark-800'
+                }`}
+              >
+                실시간
+              </Link>
+              <Link
                 to="/admin/login"
                 className="px-4 py-2 rounded-lg text-sm font-medium text-dark-400 hover:text-white hover:bg-dark-800 transition-all"
               >
