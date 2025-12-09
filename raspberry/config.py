@@ -76,6 +76,7 @@ class DetectionConfig:
     countdown_seconds: int  # 촬영 전 카운트다운 시간 (초)
     min_bbox_area_ratio: float  # 감지 영역 최소 비율 (프레임 대비)
     bbox_scale_up: float  # 바운딩 박스 확대 비율
+    use_full_frame: bool  # 사람 감지 시 전체 프레임 업로드 (크롭 안 함)
 
 
 @dataclass
@@ -117,6 +118,7 @@ detection_config = DetectionConfig(
     countdown_seconds=get_env_int("COUNTDOWN_SECONDS", 3),
     min_bbox_area_ratio=get_env_float("MIN_BBOX_AREA_RATIO", 0.15),
     bbox_scale_up=get_env_float("BBOX_SCALE_UP", 1.3),
+    use_full_frame=get_env_bool("USE_FULL_FRAME", True),  # 기본값: 전체 프레임 사용
 )
 
 led_config = LEDConfig(
