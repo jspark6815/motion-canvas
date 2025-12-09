@@ -88,9 +88,9 @@ npm run dev
 ### 3. 라즈베리파이 설정 (Pi에서 실행)
 
 ```bash
-# 1. 시스템 패키지 설치 (OpenCV, Picamera2)
+# 1. 시스템 패키지 설치 (OpenCV, Picamera2, GPIO)
 sudo apt update
-sudo apt install -y python3-opencv python3-picamera2
+sudo apt install -y python3-opencv python3-picamera2 python3-gpiozero
 
 # 2. 프로젝트 클론
 cd ~
@@ -147,6 +147,14 @@ CAMERA_CAPTURE_INTERVAL=2.0
 # 감지 설정
 DETECTION_ENABLED=true
 DETECTION_COOLDOWN_SECONDS=5.0
+
+# 카운트다운 설정
+COUNTDOWN_SECONDS=3
+
+# LED 설정
+LED_ENABLED=true
+LED_PIN=18
+LED_BLINK_ON_COUNTDOWN=true
 ```
 
 ### 웹 환경 변수
