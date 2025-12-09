@@ -88,21 +88,32 @@ npm run dev
 ### 3. 라즈베리파이 설정 (Pi에서 실행)
 
 ```bash
-cd raspberry
+# 1. 시스템 패키지 설치 (OpenCV, Picamera2)
+sudo apt update
+sudo apt install -y python3-opencv python3-picamera2
 
-# 가상환경 생성 및 활성화
-python -m venv venv
+# 2. 프로젝트 클론
+cd ~
+git clone https://github.com/yourusername/motion-canvas.git
+cd motion-canvas/raspberry
+
+# 3. 가상환경 생성 (시스템 패키지 포함)
+python3 -m venv venv --system-site-packages
 source venv/bin/activate
 
-# 의존성 설치
+# 4. pip 패키지 설치
 pip install -r requirements.txt
 
-# config.py에서 서버 주소 수정
-# server_config의 host를 실제 서버 IP로 변경
+# 5. 환경 설정
+cp .env.example .env
+nano .env  # SERVER_HOST를 실제 서버 IP로 수정
 
-# 실행
+# 6. 실행
 python -m raspberry.main
 ```
+
+> ⚠️ **중요**: OpenCV와 Picamera2는 pip으로 설치하면 빌드에 30분 이상 걸립니다.
+> 반드시 `apt`로 먼저 설치하고 `--system-site-packages` 옵션을 사용하세요.
 
 ## 🔧 상세 설정
 
@@ -114,13 +125,21 @@ PORT=8000
 GEMINI_API_KEY=your_api_key_here
 ```
 
-### 라즈베리파이 설정 (config.py)
+### 라즈베리파이 설정 (.env 파일)
 
-```python
-@dataclass
-class ServerConfig:
-    host: str = "http://YOUR_SERVER_IP"  # 서버 IP 주소
-    port: int = 8000
+```env
+# 서버 IP를 실제 값으로 변경
+SERVER_HOST=http://192.168.1.100
+SERVER_PORT=8000
+
+# 카메라 설정
+CAMERA_WIDTH=1280
+CAMERA_HEIGHT=720
+CAMERA_CAPTURE_INTERVAL=2.0
+
+# 감지 설정
+DETECTION_ENABLED=true
+DETECTION_COOLDOWN_SECONDS=5.0
 ```
 
 ### 웹 환경 변수
@@ -146,8 +165,8 @@ VITE_API_URL=http://localhost:8000
 
 ### 라즈베리파이
 - Python 3.11+
-- Picamera2
-- MediaPipe (사람 감지)
+- Picamera2 (apt 설치)
+- OpenCV (apt 설치, 사람 감지)
 - Requests
 
 ### 서버

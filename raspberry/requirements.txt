@@ -12,20 +12,27 @@ requests>=2.31.0
 numpy>=1.24.0
 Pillow>=10.0.0
 
-# 사람 감지 - OpenCV (라즈베리파이 호환)
-opencv-python-headless>=4.8.0
-
 # ==============================================
-# 라즈베리파이 전용 (시스템 패키지로 설치 권장)
+# 시스템 패키지로 설치 (apt 사용)
 # ==============================================
-# Picamera2는 apt로 설치:
-# sudo apt install -y python3-picamera2
+# OpenCV와 Picamera2는 pip 빌드가 오래 걸리므로
+# apt로 설치하는 것을 권장합니다.
 #
-# 또는 pip로 설치 시 아래 주석 해제:
-# picamera2>=0.3.12
+# sudo apt install -y python3-opencv python3-picamera2
+#
+# 가상환경에서 시스템 패키지 사용:
+# python3 -m venv venv --system-site-packages
 
 # ==============================================
-# 설치 방법
+# 전체 설치 방법 (라즈베리파이)
 # ==============================================
-# pip install -r requirements.txt
-# sudo apt install -y python3-picamera2
+# 1. 시스템 패키지 설치
+#    sudo apt update
+#    sudo apt install -y python3-opencv python3-picamera2
+#
+# 2. 가상환경 생성 (시스템 패키지 포함)
+#    python3 -m venv venv --system-site-packages
+#    source venv/bin/activate
+#
+# 3. pip 패키지 설치
+#    pip install -r requirements.txt
