@@ -1,0 +1,27 @@
+{
+  "image_id": "20251210_033156_c8de4f98",
+  "original_filename": "capture_20251210_033156_2dac54e8.jpg",
+  "stored_filename": "20251210_033156_c8de4f98.jpg",
+  "upload_time": "2025-12-10T03:31:56.117557",
+  "file_size": 4491,
+  "analyzed": true,
+  "keywords": [
+    "신체",
+    "표현",
+    "감정",
+    "순간",
+    "포착"
+  ],
+  "description": "정적인 포즈 속에서 내면의 감정이 느껴지는 형상입니다. 차분하면서도 깊은 존재감을 가지고 있습니다.",
+  "mood": "신비로운",
+  "colors": [
+    "검정",
+    "회색",
+    "흰색"
+  ],
+  "generated": true,
+  "generated_image_path": "static/generated/20251210_033156_c8de4f98_gen.png",
+  "prompt_used": "Create an artistic interpretation of a human silhouette.\n\nStyle: artistic and abstract style, fine art quality\nKey elements: 신체, 표현, 감정, 순간, 포착\nMood: 신비로운\nContext: 정적인 포즈 속에서 내면의 감정이 느껴지는 형상입니다. 차분하면서도 깊은 존재감을 가지고 있습니다.\n\nRequirements:\n- Abstract representation of human form\n- Creative and unique artistic interpretation\n- High quality digital art\n- Harmonious color palette\n- Professional composition\n- Suitable for gallery display",
+  "analyzed_time": "2025-12-10T03:31:56.226963",
+  "generated_time": "2025-12-10T03:31:56.401996"
+}

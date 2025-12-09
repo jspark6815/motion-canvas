@@ -1,8 +1,10 @@
 """
 Picamera2 기반 카메라 소스 모듈
 라즈베리파이 카메라 모듈3 제어를 담당합니다.
+싱글톤 패턴으로 카메라 리소스를 공유합니다.
 """
 from typing import Optional
+import threading
 import numpy as np
 from numpy.typing import NDArray
 
@@ -17,12 +19,28 @@ from raspberry.config import CameraConfig, camera_config
 
 
 class PiCameraSource:
-    """Picamera2 래퍼 클래스"""
+    """Picamera2 래퍼 클래스 (싱글톤)"""
+    
+    _instance: Optional["PiCameraSource"] = None
+    _lock = threading.Lock()
+    
+    def __new__(cls, config: CameraConfig = camera_config) -> "PiCameraSource":
+        """싱글톤 인스턴스 생성"""
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+                cls._instance._initialized = False
+            return cls._instance
     
     def __init__(self, config: CameraConfig = camera_config) -> None:
+        if self._initialized:
+            return
         self.config = config
         self._camera: Optional[Picamera2] = None
         self._is_running: bool = False
+        self._latest_frame: Optional[NDArray[np.uint8]] = None
+        self._frame_lock = threading.Lock()
+        self._initialized = True
     
     def start(self) -> None:
         """카메라 초기화 및 시작"""
@@ -76,23 +94,42 @@ class PiCameraSource:
             print("[PiCameraSource] 카메라가 시작되지 않았습니다.")
             return None
         
+        frame = None
+        
         # 실제 카메라가 있으면 캡처
         if self._camera and HAS_PICAMERA:
             try:
                 frame = self._camera.capture_array()
-                return frame
             except Exception as e:
                 print(f"[PiCameraSource] 캡처 실패: {e}")
                 return None
+        else:
+            # Mock 모드: 더미 이미지 생성
+            frame = np.zeros(
+                (self.config.height, self.config.width, 3),
+                dtype=np.uint8
+            )
+            # 테스트용으로 랜덤 노이즈 추가
+            frame[:] = np.random.randint(0, 50, (self.config.height, self.config.width, 3), dtype=np.uint8)
         
-        # Mock 모드: 더미 이미지 생성
-        dummy_frame = np.zeros(
-            (self.config.height, self.config.width, 3),
-            dtype=np.uint8
-        )
-        # 테스트용으로 랜덤 노이즈 추가
-        dummy_frame[:] = np.random.randint(0, 50, (self.config.height, self.config.width, 3), dtype=np.uint8)
-        return dummy_frame
+        # 최신 프레임 저장 (스트림용)
+        if frame is not None:
+            with self._frame_lock:
+                self._latest_frame = frame.copy()
+        
+        return frame
+    
+    def get_latest_frame(self) -> Optional[NDArray[np.uint8]]:
+        """
+        최신 프레임 조회 (스트림용, 스레드 안전)
+        
+        Returns:
+            최신 프레임 또는 None
+        """
+        with self._frame_lock:
+            if self._latest_frame is not None:
+                return self._latest_frame.copy()
+            return None
     
     @property
     def is_running(self) -> bool:

@@ -1,0 +1,27 @@
+{
+  "image_id": "20251210_031300_489de3dd",
+  "original_filename": "capture_20251210_031300_5f4ee300.jpg",
+  "stored_filename": "20251210_031300_489de3dd.jpg",
+  "upload_time": "2025-12-10T03:13:00.881026",
+  "file_size": 12167,
+  "analyzed": true,
+  "keywords": [
+    "신체",
+    "표현",
+    "감정",
+    "순간",
+    "포착"
+  ],
+  "description": "움직임의 순간이 포착된 인물입니다. 에너지와 생명력이 실루엣을 통해 표현되고 있습니다.",
+  "mood": "평화로운",
+  "colors": [
+    "검정",
+    "회색",
+    "흰색"
+  ],
+  "generated": true,
+  "generated_image_path": "static/generated/20251210_031300_489de3dd_gen.png",
+  "prompt_used": "Create an artistic interpretation of a human silhouette.\n\nStyle: artistic and abstract style, fine art quality\nKey elements: 신체, 표현, 감정, 순간, 포착\nMood: 평화로운\nContext: 움직임의 순간이 포착된 인물입니다. 에너지와 생명력이 실루엣을 통해 표현되고 있습니다.\n\nRequirements:\n- Abstract representation of human form\n- Creative and unique artistic interpretation\n- High quality digital art\n- Harmonious color palette\n- Professional composition\n- Suitable for gallery display",
+  "analyzed_time": "2025-12-10T03:13:00.987043",
+  "generated_time": "2025-12-10T03:13:01.156585"
+}

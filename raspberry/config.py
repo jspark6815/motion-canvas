@@ -86,6 +86,16 @@ class LEDConfig:
     blink_on_countdown: bool  # 카운트다운 중 깜빡임
 
 
+@dataclass
+class StreamConfig:
+    """MJPEG 스트림 설정"""
+    enabled: bool  # 스트림 사용 여부
+    host: str  # 스트림 서버 호스트
+    port: int  # 스트림 서버 포트
+    fps: int  # 스트림 FPS
+    quality: int  # JPEG 품질 (1-100)
+
+
 # 환경변수에서 설정 로드
 server_config = ServerConfig(
     host=get_env("SERVER_HOST", "http://localhost"),
@@ -115,6 +125,14 @@ led_config = LEDConfig(
     blink_on_countdown=get_env_bool("LED_BLINK_ON_COUNTDOWN", True),
 )
 
+stream_config = StreamConfig(
+    enabled=get_env_bool("STREAM_ENABLED", True),
+    host=get_env("STREAM_HOST", "0.0.0.0"),
+    port=get_env_int("STREAM_PORT", 8080),
+    fps=get_env_int("STREAM_FPS", 15),
+    quality=get_env_int("STREAM_QUALITY", 80),
+)
+
 
 # 설정 출력 (디버깅용)
 def print_config() -> None:
@@ -139,6 +157,12 @@ def print_config() -> None:
     print(f"  - Enabled: {led_config.enabled}")
     print(f"  - Pin: {led_config.pin}")
     print(f"  - Blink on Countdown: {led_config.blink_on_countdown}")
+    print(f"[Stream]")
+    print(f"  - Enabled: {stream_config.enabled}")
+    print(f"  - Host: {stream_config.host}")
+    print(f"  - Port: {stream_config.port}")
+    print(f"  - FPS: {stream_config.fps}")
+    print(f"  - Quality: {stream_config.quality}")
     print("=" * 50)
 
 

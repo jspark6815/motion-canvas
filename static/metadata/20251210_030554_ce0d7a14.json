@@ -1,0 +1,27 @@
+{
+  "image_id": "20251210_030554_ce0d7a14",
+  "original_filename": "capture_20251210_030554_69b0891d.jpg",
+  "stored_filename": "20251210_030554_ce0d7a14.jpg",
+  "upload_time": "2025-12-10T03:05:54.970154",
+  "file_size": 15076,
+  "analyzed": true,
+  "keywords": [
+    "사람",
+    "실루엣",
+    "그림자",
+    "존재",
+    "형태"
+  ],
+  "description": "한 사람의 형상이 공간 속에 존재하고 있습니다. 빛과 그림자의 경계에서 인간의 본질적인 형태가 드러납니다.",
+  "mood": "역동적인",
+  "colors": [
+    "파랑",
+    "보라",
+    "검정"
+  ],
+  "generated": true,
+  "generated_image_path": "static/generated/20251210_030554_ce0d7a14_gen.png",
+  "prompt_used": "Create an artistic interpretation of a human silhouette.\n\nStyle: artistic and abstract style, fine art quality\nKey elements: 사람, 실루엣, 그림자, 존재, 형태\nMood: 역동적인\nContext: 한 사람의 형상이 공간 속에 존재하고 있습니다. 빛과 그림자의 경계에서 인간의 본질적인 형태가 드러납니다.\n\nRequirements:\n- Abstract representation of human form\n- Creative and unique artistic interpretation\n- High quality digital art\n- Harmonious color palette\n- Professional composition\n- Suitable for gallery display",
+  "analyzed_time": "2025-12-10T03:05:55.081369",
+  "generated_time": "2025-12-10T03:05:55.310410"
+}
