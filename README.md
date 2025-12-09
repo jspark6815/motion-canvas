@@ -123,6 +123,13 @@ python -m raspberry.main
 HOST=0.0.0.0
 PORT=8000
 GEMINI_API_KEY=your_api_key_here
+
+# JWT 인증 설정
+JWT_SECRET_KEY=change-this-to-a-random-secret-key-in-production
+
+# 관리자 계정 설정
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin123
 ```
 
 ### 라즈베리파이 설정 (.env 파일)
@@ -160,6 +167,10 @@ VITE_API_URL=http://localhost:8000
 | `/gallery` | GET | 갤러리 목록 |
 | `/gallery/{id}` | GET | 상세 정보 |
 | `/health` | GET | 서버 상태 확인 |
+| `/admin/login` | POST | 관리자 로그인 |
+| `/admin/me` | GET | 현재 관리자 정보 |
+| `/admin/stats` | GET | 관리자 통계 |
+| `/admin/images/{id}` | DELETE | 이미지 삭제 (관리자 전용) |
 
 ## 🛠 기술 스택
 

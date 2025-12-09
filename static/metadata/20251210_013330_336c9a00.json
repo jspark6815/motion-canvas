@@ -1,0 +1,27 @@
+{
+  "image_id": "20251210_013330_336c9a00",
+  "original_filename": "capture_20251210_013330_de732101.jpg",
+  "stored_filename": "20251210_013330_336c9a00.jpg",
+  "upload_time": "2025-12-10T01:33:30.241201",
+  "file_size": 99199,
+  "analyzed": true,
+  "keywords": [
+    "사람",
+    "실루엣",
+    "그림자",
+    "존재",
+    "형태"
+  ],
+  "description": "역동적인 자세의 인물이 프레임 안에서 공간을 지배하고 있습니다. 강한 의지와 결단력이 느껴집니다.",
+  "mood": "몽환적인",
+  "colors": [
+    "차가운 파랑",
+    "회색",
+    "은색"
+  ],
+  "generated": true,
+  "generated_image_path": "static/generated/20251210_013330_336c9a00_gen.png",
+  "prompt_used": "Create an artistic interpretation of a human silhouette.\n\nStyle: artistic and abstract style, fine art quality\nKey elements: 사람, 실루엣, 그림자, 존재, 형태\nMood: 몽환적인\nContext: 역동적인 자세의 인물이 프레임 안에서 공간을 지배하고 있습니다. 강한 의지와 결단력이 느껴집니다.\n\nRequirements:\n- Abstract representation of human form\n- Creative and unique artistic interpretation\n- High quality digital art\n- Harmonious color palette\n- Professional composition\n- Suitable for gallery display",
+  "analyzed_time": "2025-12-10T01:33:30.242191",
+  "generated_time": "2025-12-10T01:33:30.335382"
+}

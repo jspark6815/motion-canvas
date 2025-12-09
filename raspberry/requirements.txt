@@ -1,38 +1,38 @@
 # ==============================================
-# AI Art Gallery - 라즈베리파이 의존성
+# AI Art Gallery - Raspberry Pi Dependencies
 # ==============================================
 
-# 환경변수 관리
+# Environment variables
 python-dotenv>=1.0.0
 
-# HTTP 요청
+# HTTP requests
 requests>=2.31.0
 
-# 이미지 처리
+# Image processing
 numpy>=1.24.0
 Pillow>=10.0.0
 
 # ==============================================
-# 시스템 패키지로 설치 (apt 사용)
+# System packages (install via apt)
 # ==============================================
-# OpenCV와 Picamera2는 pip 빌드가 오래 걸리므로
-# apt로 설치하는 것을 권장합니다.
+# OpenCV and Picamera2 should be installed via apt
+# because pip build takes too long (30+ minutes)
 #
 # sudo apt install -y python3-opencv python3-picamera2
 #
-# 가상환경에서 시스템 패키지 사용:
+# Use --system-site-packages when creating venv:
 # python3 -m venv venv --system-site-packages
 
 # ==============================================
-# 전체 설치 방법 (라즈베리파이)
+# Installation steps (Raspberry Pi)
 # ==============================================
-# 1. 시스템 패키지 설치
+# 1. Install system packages
 #    sudo apt update
 #    sudo apt install -y python3-opencv python3-picamera2
 #
-# 2. 가상환경 생성 (시스템 패키지 포함)
+# 2. Create venv with system packages
 #    python3 -m venv venv --system-site-packages
 #    source venv/bin/activate
 #
-# 3. pip 패키지 설치
+# 3. Install pip packages
 #    pip install -r requirements.txt

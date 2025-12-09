@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
-from server.routers import upload_router, analyze_router, generate_router, gallery_router
+from server.routers import upload_router, analyze_router, generate_router, gallery_router, admin_router
 from server.schemas import HealthResponse
 from server.services.analyzer import analyzer
 from server.services.generator import generator
@@ -79,6 +79,7 @@ app.include_router(upload_router)
 app.include_router(analyze_router)
 app.include_router(generate_router)
 app.include_router(gallery_router)
+app.include_router(admin_router)
 
 
 @app.get("/", tags=["root"])

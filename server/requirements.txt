@@ -22,3 +22,7 @@ python-multipart>=0.0.6
 # 비동기 HTTP 클라이언트 (선택)
 httpx>=0.25.0
 
+# 인증 (JWT)
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+

@@ -3,6 +3,7 @@ from server.routers.upload import router as upload_router
 from server.routers.analyze import router as analyze_router
 from server.routers.generate import router as generate_router
 from server.routers.gallery import router as gallery_router
+from server.routers.admin import router as admin_router
 
-__all__ = ["upload_router", "analyze_router", "generate_router", "gallery_router"]
+__all__ = ["upload_router", "analyze_router", "generate_router", "gallery_router", "admin_router"]
 
