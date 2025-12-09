@@ -27,6 +27,17 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-dark-950 via-dark-900 to-primary-950/30">
       <div className="w-full max-w-md">
+        {/* 뒤로가기 */}
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-4 inline-flex items-center gap-2 text-sm text-dark-300 hover:text-white transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          돌아가기
+        </button>
+
         <div className="glass rounded-2xl p-8 shadow-2xl">
           {/* 헤더 */}
           <div className="text-center mb-8">
