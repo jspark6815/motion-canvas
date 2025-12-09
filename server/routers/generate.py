@@ -3,6 +3,7 @@
 AI를 사용하여 새로운 이미지를 생성합니다.
 """
 from datetime import datetime
+from pathlib import Path
 from fastapi import APIRouter, HTTPException
 
 from server.schemas import GenerateRequest, GenerateResponse
@@ -53,13 +54,17 @@ async def generate_image(request: GenerateRequest) -> GenerateResponse:
             detail="키워드가 필요합니다. 먼저 이미지 분석을 수행하세요."
         )
     
+    # 원본 이미지 경로
+    source_image_path = storage.get_upload_path(request.image_id)
+    
     # 이미지 생성
     result = await generator.generate_image(
         keywords=keywords,
         description=metadata.get("description", ""),
         mood=metadata.get("mood", ""),
         style=request.style,
-        prompt_override=request.prompt_override
+        prompt_override=request.prompt_override,
+        source_image_path=source_image_path
     )
     
     if not result.get("success"):
