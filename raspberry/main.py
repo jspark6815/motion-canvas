@@ -7,7 +7,12 @@ import signal
 import sys
 from typing import Optional
 
-from raspberry.config import camera_config, detection_config, server_config
+from raspberry.config import (
+    camera_config, 
+    detection_config, 
+    server_config,
+    print_config
+)
 from raspberry.camera.picam_source import PiCameraSource
 from raspberry.vision.person_detector import PersonDetector
 from raspberry.vision.segmentation import ImageSegmenter
@@ -33,14 +38,20 @@ class AIArtCapture:
         print("🎨 AI Art Capture System 초기화 중...")
         print("=" * 50)
         
+        # 설정 출력
+        print_config()
+        
         try:
             # 카메라 초기화
             self.camera = PiCameraSource(camera_config)
             self.camera.start()
             
             # 사람 감지기 초기화
-            self.detector = PersonDetector(detection_config)
-            self.detector.initialize()
+            if detection_config.enabled:
+                self.detector = PersonDetector(detection_config)
+                self.detector.initialize()
+            else:
+                print("[Main] 사람 감지 비활성화됨 - 모든 프레임 업로드")
             
             # 세그멘터 초기화
             self.segmenter = ImageSegmenter()
@@ -60,6 +71,8 @@ class AIArtCapture:
             
         except Exception as e:
             print(f"❌ 초기화 실패: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def cleanup(self) -> None:
@@ -88,7 +101,7 @@ class AIArtCapture:
         Returns:
             사람 감지 및 업로드 성공 여부
         """
-        if not self.camera or not self.detector or not self.segmenter:
+        if not self.camera or not self.segmenter:
             return False
         
         # 프레임 캡처
@@ -96,24 +109,28 @@ class AIArtCapture:
         if frame is None:
             return False
         
-        # 사람 감지
-        detections = self.detector.detect(frame)
-        
-        if not detections:
-            return False
-        
-        if not self._can_capture():
-            print("⏳ 쿨다운 중...")
-            return False
-        
-        print(f"👤 사람 감지! (신뢰도: {detections[0].confidence:.2f})")
-        
-        # 바운딩 박스 크롭
-        bbox = detections[0]
-        cropped = self.segmenter.crop_bbox(frame, bbox)
-        
-        # 패딩 추가
-        processed = self.segmenter.add_padding(cropped, padding=10)
+        # 사람 감지 (활성화된 경우)
+        if detection_config.enabled and self.detector:
+            detections = self.detector.detect(frame)
+            
+            if not detections:
+                return False
+            
+            if not self._can_capture():
+                print("⏳ 쿨다운 중...")
+                return False
+            
+            print(f"👤 사람 감지! (신뢰도: {detections[0].confidence:.2f})")
+            
+            # 바운딩 박스 크롭
+            bbox = detections[0]
+            processed = self.segmenter.crop_bbox(frame, bbox)
+            processed = self.segmenter.add_padding(processed, padding=10)
+        else:
+            # 감지 비활성화: 전체 프레임 사용
+            if not self._can_capture():
+                return False
+            processed = frame
         
         # JPEG 인코딩
         image_bytes = encode_jpeg(processed, quality=90)
@@ -145,6 +162,7 @@ class AIArtCapture:
         print("🚀 캡처 시스템 시작")
         print(f"   - 촬영 간격: {camera_config.capture_interval}초")
         print(f"   - 쿨다운: {detection_config.cooldown_seconds}초")
+        print(f"   - 감지 활성화: {detection_config.enabled}")
         print("   - 종료: Ctrl+C")
         print("=" * 50 + "\n")
         
@@ -158,6 +176,8 @@ class AIArtCapture:
                 break
             except Exception as e:
                 print(f"❌ 오류 발생: {e}")
+                import traceback
+                traceback.print_exc()
                 time.sleep(1)
         
         self._running = False
