@@ -74,6 +74,8 @@ class DetectionConfig:
     cooldown_seconds: float  # 연속 촬영 방지 쿨다운
     enabled: bool  # 감지 기능 활성화 여부
     countdown_seconds: int  # 촬영 전 카운트다운 시간 (초)
+    min_bbox_area_ratio: float  # 감지 영역 최소 비율 (프레임 대비)
+    bbox_scale_up: float  # 바운딩 박스 확대 비율
 
 
 @dataclass
@@ -103,6 +105,8 @@ detection_config = DetectionConfig(
     cooldown_seconds=get_env_float("DETECTION_COOLDOWN_SECONDS", 5.0),
     enabled=get_env_bool("DETECTION_ENABLED", True),
     countdown_seconds=get_env_int("COUNTDOWN_SECONDS", 3),
+    min_bbox_area_ratio=get_env_float("MIN_BBOX_AREA_RATIO", 0.15),
+    bbox_scale_up=get_env_float("BBOX_SCALE_UP", 1.3),
 )
 
 led_config = LEDConfig(

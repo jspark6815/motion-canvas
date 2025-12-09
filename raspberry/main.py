@@ -149,8 +149,19 @@ class AIArtCapture:
             if frame is None:
                 return False
             
-            # 바운딩 박스 크롭
+            # 바운딩 박스 크롭 (너무 작으면 확대)
             bbox = detections[0]
+            h, w = frame.shape[:2]
+            area_ratio = (bbox.width * bbox.height) / (w * h)
+
+            if area_ratio < detection_config.min_bbox_area_ratio:
+                print(f"[Main] 감지 영역이 작음 ({area_ratio:.3f}). 영역 확대 후 사용.")
+                bbox = self.segmenter.expand_bbox(
+                    bbox=bbox,
+                    frame_shape=frame.shape,
+                    scale=detection_config.bbox_scale_up
+                )
+
             processed = self.segmenter.crop_bbox(frame, bbox)
             processed = self.segmenter.add_padding(processed, padding=10)
         else:
@@ -192,6 +203,8 @@ class AIArtCapture:
         print(f"   - 감지 활성화: {detection_config.enabled}")
         print(f"   - 카운트다운: {detection_config.countdown_seconds}초")
         print(f"   - LED: {'활성화' if led_config.enabled else '비활성화'}")
+        print(f"   - 최소 감지영역 비율: {detection_config.min_bbox_area_ratio}")
+        print(f"   - 감지영역 확대 비율: {detection_config.bbox_scale_up}")
         print("   - 종료: Ctrl+C")
         print("=" * 50 + "\n")
         

@@ -41,6 +41,35 @@ class ImageSegmenter:
         
         cropped = frame[y1:y2, x1:x2].copy()
         return cropped
+
+    def expand_bbox(
+        self,
+        bbox: BoundingBox,
+        frame_shape: tuple[int, int, int],
+        scale: float
+    ) -> BoundingBox:
+        """
+        바운딩 박스를 주어진 비율로 확장 (프레임 경계 내로 제한)
+        """
+        h, w = frame_shape[:2]
+        cx = bbox.x + bbox.width // 2
+        cy = bbox.y + bbox.height // 2
+
+        new_w = int(bbox.width * scale)
+        new_h = int(bbox.height * scale)
+
+        x1 = max(0, cx - new_w // 2)
+        y1 = max(0, cy - new_h // 2)
+        x2 = min(w, cx + new_w // 2)
+        y2 = min(h, cy + new_h // 2)
+
+        return BoundingBox(
+            x=x1,
+            y=y1,
+            width=max(1, x2 - x1),
+            height=max(1, y2 - y1),
+            confidence=bbox.confidence
+        )
     
     def extract_silhouette(
         self, 
