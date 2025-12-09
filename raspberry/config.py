@@ -73,6 +73,15 @@ class DetectionConfig:
     min_detection_confidence: float
     cooldown_seconds: float  # 연속 촬영 방지 쿨다운
     enabled: bool  # 감지 기능 활성화 여부
+    countdown_seconds: int  # 촬영 전 카운트다운 시간 (초)
+
+
+@dataclass
+class LEDConfig:
+    """LED 설정"""
+    enabled: bool  # LED 사용 여부
+    pin: int  # GPIO 핀 번호
+    blink_on_countdown: bool  # 카운트다운 중 깜빡임
 
 
 # 환경변수에서 설정 로드
@@ -93,6 +102,13 @@ detection_config = DetectionConfig(
     min_detection_confidence=get_env_float("DETECTION_MIN_CONFIDENCE", 0.5),
     cooldown_seconds=get_env_float("DETECTION_COOLDOWN_SECONDS", 5.0),
     enabled=get_env_bool("DETECTION_ENABLED", True),
+    countdown_seconds=get_env_int("COUNTDOWN_SECONDS", 3),
+)
+
+led_config = LEDConfig(
+    enabled=get_env_bool("LED_ENABLED", True),
+    pin=get_env_int("LED_PIN", 18),
+    blink_on_countdown=get_env_bool("LED_BLINK_ON_COUNTDOWN", True),
 )
 
 
@@ -114,6 +130,11 @@ def print_config() -> None:
     print(f"  - Enabled: {detection_config.enabled}")
     print(f"  - Min Confidence: {detection_config.min_detection_confidence}")
     print(f"  - Cooldown: {detection_config.cooldown_seconds}초")
+    print(f"  - Countdown: {detection_config.countdown_seconds}초")
+    print(f"[LED]")
+    print(f"  - Enabled: {led_config.enabled}")
+    print(f"  - Pin: {led_config.pin}")
+    print(f"  - Blink on Countdown: {led_config.blink_on_countdown}")
     print("=" * 50)
 
 

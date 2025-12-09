@@ -9,7 +9,8 @@ from typing import Optional
 
 from raspberry.config import (
     camera_config, 
-    detection_config, 
+    detection_config,
+    led_config,
     server_config,
     print_config
 )
@@ -18,6 +19,8 @@ from raspberry.vision.person_detector import PersonDetector
 from raspberry.vision.segmentation import ImageSegmenter
 from raspberry.network.api_client import APIClient
 from raspberry.utils.image_encode import encode_jpeg, generate_filename
+from raspberry.utils.led_controller import LEDController
+from raspberry.utils.countdown import show_countdown
 
 
 class AIArtCapture:
@@ -28,6 +31,7 @@ class AIArtCapture:
         self.detector: Optional[PersonDetector] = None
         self.segmenter: Optional[ImageSegmenter] = None
         self.api_client: Optional[APIClient] = None
+        self.led: Optional[LEDController] = None
         
         self._running: bool = False
         self._last_capture_time: float = 0
@@ -56,6 +60,11 @@ class AIArtCapture:
             # 세그멘터 초기화
             self.segmenter = ImageSegmenter()
             
+            # LED 초기화
+            if led_config.enabled:
+                self.led = LEDController(pin=led_config.pin)
+                self.led.initialize()
+            
             # API 클라이언트 초기화
             self.api_client = APIClient(server_config)
             
@@ -83,6 +92,8 @@ class AIArtCapture:
             self.camera.stop()
         if self.detector:
             self.detector.release()
+        if self.led:
+            self.led.cleanup()
         if self.api_client:
             self.api_client.close()
         
@@ -121,6 +132,22 @@ class AIArtCapture:
                 return False
             
             print(f"👤 사람 감지! (신뢰도: {detections[0].confidence:.2f})")
+            
+            # 카운트다운 표시
+            if detection_config.countdown_seconds > 0:
+                show_countdown(
+                    seconds=detection_config.countdown_seconds,
+                    message="촬영까지",
+                    show_led=self.led if (led_config.enabled and led_config.blink_on_countdown) else None
+                )
+            elif self.led and led_config.enabled:
+                # 카운트다운 없으면 LED만 깜빡임
+                self.led.blink(times=2, duration=0.3)
+            
+            # 최종 프레임 캡처 (카운트다운 후)
+            frame = self.camera.capture()
+            if frame is None:
+                return False
             
             # 바운딩 박스 크롭
             bbox = detections[0]
@@ -163,6 +190,8 @@ class AIArtCapture:
         print(f"   - 촬영 간격: {camera_config.capture_interval}초")
         print(f"   - 쿨다운: {detection_config.cooldown_seconds}초")
         print(f"   - 감지 활성화: {detection_config.enabled}")
+        print(f"   - 카운트다운: {detection_config.countdown_seconds}초")
+        print(f"   - LED: {'활성화' if led_config.enabled else '비활성화'}")
         print("   - 종료: Ctrl+C")
         print("=" * 50 + "\n")
         

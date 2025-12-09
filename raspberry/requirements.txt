@@ -15,10 +15,10 @@ Pillow>=10.0.0
 # ==============================================
 # System packages (install via apt)
 # ==============================================
-# OpenCV and Picamera2 should be installed via apt
+# OpenCV, Picamera2, and GPIO libraries should be installed via apt
 # because pip build takes too long (30+ minutes)
 #
-# sudo apt install -y python3-opencv python3-picamera2
+# sudo apt install -y python3-opencv python3-picamera2 python3-gpiozero
 #
 # Use --system-site-packages when creating venv:
 # python3 -m venv venv --system-site-packages
