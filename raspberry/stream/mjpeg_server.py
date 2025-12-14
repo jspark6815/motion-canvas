@@ -174,27 +174,8 @@ class MJPEGStreamServer:
                     await asyncio.sleep(frame_interval)
                     continue
                 
-                # RGB -> BGR 변환 (OpenCV용)
-                # Picamera2는 RGB를 반환하고, cv2.imencode는 BGR을 기대합니다.
-                # 하지만 색상이 뒤바뀐다면(파란색 <-> 노란색), 
-                # 1. Picamera2가 이미 BGR을 주거나
-                # 2. 브라우저/클라이언트가 RGB를 기대하거나
-                # 3. 변환이 중복되었을 수 있습니다.
-                #
-                # 우선 변환을 제거하고 RGB 그대로 인코딩해 봅니다.
-                # 만약 여전히 이상하면 cv2.COLOR_RGB2BGR 대신 cv2.COLOR_BGR2RGB를 시도하거나
-                # 변환 로직을 다시 활성화해야 합니다.
-                
-                # 색상 문제 해결을 위해 변환 로직 수정 (필요 시 주석 해제/변경)
-                # if len(frame.shape) == 3 and frame.shape[2] == 3:
-                #     bgr_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-                # else:
-                #     bgr_frame = frame
-                
-                # 변환 없이 그대로 사용 (Picamera2가 RGB, cv2가 BGR을 기대하지만,
-                # 색상이 반전되어 보인다면 여기서 변환을 안 하거나 반대로 해야 함)
-                # 지금은 변환을 꺼서 확인
-                bgr_frame = frame
+                # RGB → BGR 변환 (Picamera2는 RGB, OpenCV imencode는 BGR 기대)
+                bgr_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
                 
                 # JPEG 인코딩
                 encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), self.config.quality]

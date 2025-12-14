@@ -7,8 +7,11 @@ import json
 import uuid
 import tempfile
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Optional, List, Dict, Any
+
+# 한국 시간대 (UTC+9)
+KST = timezone(timedelta(hours=9))
 
 import boto3
 from botocore.exceptions import ClientError
@@ -41,7 +44,7 @@ class ImageStorage:
     
     def generate_id(self) -> str:
         """고유 이미지 ID 생성"""
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(KST).strftime("%Y%m%d_%H%M%S")
         short_uuid = str(uuid.uuid4())[:8]
         return f"{timestamp}_{short_uuid}"
     
@@ -88,7 +91,7 @@ class ImageStorage:
             "original_filename": original_filename,
             "stored_filename": filename,
             "s3_key": s3_key,
-            "upload_time": datetime.now().isoformat(),
+            "upload_time": datetime.now(KST).isoformat(),
             "file_size": len(image_data),
             "analyzed": False,
             "keywords": [],
@@ -143,7 +146,7 @@ class ImageStorage:
         if metadata:
             metadata["generated"] = True
             metadata["generated_s3_key"] = s3_key
-            metadata["generated_time"] = datetime.now().isoformat()
+            metadata["generated_time"] = datetime.now(KST).isoformat()
             metadata["prompt_used"] = prompt_used
             self._save_metadata(image_id, metadata)
         
