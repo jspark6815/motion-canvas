@@ -4,7 +4,7 @@
  */
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // 토큰 저장 키
 const TOKEN_KEY = 'admin_token';

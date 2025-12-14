@@ -5,9 +5,9 @@
 import axios, { AxiosInstance } from 'axios';
 
 // API 기본 URL
-// - 프로덕션: 빈 문자열 (같은 서버에서 Nginx가 프록시)
+// - 프로덕션: /api (Nginx가 백엔드로 프록시)
 // - 개발: localhost:8000 또는 환경변수로 지정
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Axios 인스턴스 생성
 const api: AxiosInstance = axios.create({
