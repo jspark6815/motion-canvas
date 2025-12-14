@@ -112,43 +112,21 @@ async def delete_image(
     """
     이미지 삭제 (관리자 전용)
     
-    원본 이미지, 생성된 이미지, 메타데이터를 모두 삭제합니다.
+    원본 이미지, 생성된 이미지, 메타데이터를 S3에서 모두 삭제합니다.
     """
-    from pathlib import Path
+    # S3에서 이미지 삭제
+    result = storage.delete_image(image_id)
     
-    # 메타데이터 확인
-    metadata = storage.get_metadata(image_id)
-    if not metadata:
+    if not result["success"] and "Image not found" in result.get("message", ""):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Image not found"
         )
     
-    deleted_files = []
-    
-    # 원본 이미지 삭제
-    upload_path = storage.get_upload_path(image_id)
-    if upload_path and upload_path.exists():
-        upload_path.unlink()
-        deleted_files.append(str(upload_path))
-    
-    # 생성된 이미지 삭제
-    if metadata.get("generated_image_path"):
-        generated_path = Path(metadata["generated_image_path"])
-        if generated_path.exists():
-            generated_path.unlink()
-            deleted_files.append(str(generated_path))
-    
-    # 메타데이터 삭제
-    metadata_path = storage.metadata_path / f"{image_id}.json"
-    if metadata_path.exists():
-        metadata_path.unlink()
-        deleted_files.append(str(metadata_path))
-    
     return DeleteImageResponse(
-        success=True,
-        message=f"Image {image_id} deleted successfully",
-        deleted_files=deleted_files
+        success=result["success"],
+        message=result["message"],
+        deleted_files=result["deleted_keys"]
     )
 
 

@@ -344,6 +344,71 @@ class ImageStorage:
                     count += 1
         
         return count
+    
+    def delete_image(self, image_id: str) -> Dict[str, Any]:
+        """
+        이미지 및 관련 파일 모두 삭제 (S3)
+        
+        Args:
+            image_id: 삭제할 이미지 ID
+            
+        Returns:
+            삭제 결과 딕셔너리
+        """
+        deleted_keys = []
+        errors = []
+        
+        # 메타데이터 먼저 로드
+        metadata = self._load_metadata(image_id)
+        if not metadata:
+            return {
+                "success": False,
+                "message": "Image not found",
+                "deleted_keys": [],
+                "errors": ["Metadata not found"]
+            }
+        
+        # 1. 원본 이미지 삭제
+        upload_key = metadata.get("s3_key")
+        if upload_key:
+            try:
+                self.s3_client.delete_object(
+                    Bucket=self.bucket_name,
+                    Key=upload_key
+                )
+                deleted_keys.append(upload_key)
+            except ClientError as e:
+                errors.append(f"Failed to delete upload: {str(e)}")
+        
+        # 2. 생성된 이미지 삭제
+        generated_key = metadata.get("generated_s3_key")
+        if generated_key:
+            try:
+                self.s3_client.delete_object(
+                    Bucket=self.bucket_name,
+                    Key=generated_key
+                )
+                deleted_keys.append(generated_key)
+            except ClientError as e:
+                errors.append(f"Failed to delete generated: {str(e)}")
+        
+        # 3. 메타데이터 삭제
+        metadata_key = f"{self.metadata_prefix}{image_id}.json"
+        try:
+            self.s3_client.delete_object(
+                Bucket=self.bucket_name,
+                Key=metadata_key
+            )
+            deleted_keys.append(metadata_key)
+        except ClientError as e:
+            errors.append(f"Failed to delete metadata: {str(e)}")
+        
+        return {
+            "success": len(errors) == 0,
+            "message": f"Deleted {len(deleted_keys)} objects" if not errors else f"Partial deletion with {len(errors)} errors",
+            "deleted_keys": deleted_keys,
+            "errors": errors
+        }
 
 
 # 싱글톤 인스턴스
