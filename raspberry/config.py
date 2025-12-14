@@ -86,8 +86,15 @@ class DetectionConfig:
 class LEDConfig:
     """LED 설정"""
     enabled: bool  # LED 사용 여부
-    pin: int  # GPIO 핀 번호
+    pin: int  # GPIO 핀 번호 (단색 LED용)
     blink_on_countdown: bool  # 카운트다운 중 깜빡임
+    
+    # RGB LED 설정
+    rgb_enabled: bool  # RGB LED 사용 여부
+    rgb_red_pin: int  # RGB LED 빨강 핀
+    rgb_green_pin: int  # RGB LED 초록 핀
+    rgb_blue_pin: int  # RGB LED 파랑 핀
+    rgb_common_anode: bool  # Common Anode 타입 여부
 
 
 @dataclass
@@ -133,6 +140,12 @@ led_config = LEDConfig(
     enabled=get_env_bool("LED_ENABLED", True),
     pin=get_env_int("LED_PIN", 18),
     blink_on_countdown=get_env_bool("LED_BLINK_ON_COUNTDOWN", True),
+    # RGB LED 설정
+    rgb_enabled=get_env_bool("RGB_LED_ENABLED", False),
+    rgb_red_pin=get_env_int("RGB_LED_RED_PIN", 17),
+    rgb_green_pin=get_env_int("RGB_LED_GREEN_PIN", 27),
+    rgb_blue_pin=get_env_int("RGB_LED_BLUE_PIN", 22),
+    rgb_common_anode=get_env_bool("RGB_LED_COMMON_ANODE", False),
 )
 
 stream_config = StreamConfig(
@@ -171,6 +184,10 @@ def print_config() -> None:
     print(f"  - Enabled: {led_config.enabled}")
     print(f"  - Pin: {led_config.pin}")
     print(f"  - Blink on Countdown: {led_config.blink_on_countdown}")
+    print(f"  - RGB LED: {led_config.rgb_enabled}")
+    if led_config.rgb_enabled:
+        print(f"  - RGB Pins: R={led_config.rgb_red_pin}, G={led_config.rgb_green_pin}, B={led_config.rgb_blue_pin}")
+        print(f"  - Common Anode: {led_config.rgb_common_anode}")
     print(f"[Stream]")
     print(f"  - Enabled: {stream_config.enabled}")
     print(f"  - Host: {stream_config.host}")

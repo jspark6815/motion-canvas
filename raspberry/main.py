@@ -21,6 +21,7 @@ from raspberry.vision.segmentation import ImageSegmenter
 from raspberry.network.api_client import APIClient
 from raspberry.utils.image_encode import encode_jpeg, generate_filename
 from raspberry.utils.led_controller import LEDController
+from raspberry.utils.rgb_led_controller import RGBLEDController
 from raspberry.utils.countdown import show_countdown
 from raspberry.stream.mjpeg_server import MJPEGStreamServer
 from raspberry.stream.websocket_pusher import WebSocketStreamPusher
@@ -35,6 +36,7 @@ class AIArtCapture:
         self.segmenter: Optional[ImageSegmenter] = None
         self.api_client: Optional[APIClient] = None
         self.led: Optional[LEDController] = None
+        self.rgb_led: Optional[RGBLEDController] = None
         self.stream_server: Optional[MJPEGStreamServer] = None
         self.stream_pusher: Optional[WebSocketStreamPusher] = None
         
@@ -65,8 +67,17 @@ class AIArtCapture:
             # 세그멘터 초기화
             self.segmenter = ImageSegmenter()
             
-            # LED 초기화
-            if led_config.enabled:
+            # LED 초기화 (RGB LED 우선)
+            if led_config.rgb_enabled:
+                self.rgb_led = RGBLEDController(
+                    red_pin=led_config.rgb_red_pin,
+                    green_pin=led_config.rgb_green_pin,
+                    blue_pin=led_config.rgb_blue_pin,
+                    common_anode=led_config.rgb_common_anode
+                )
+                self.rgb_led.initialize()
+                print("🌈 RGB LED 활성화")
+            elif led_config.enabled:
                 self.led = LEDController(pin=led_config.pin)
                 self.led.initialize()
             
@@ -118,6 +129,8 @@ class AIArtCapture:
             self.detector.release()
         if self.led:
             self.led.cleanup()
+        if self.rgb_led:
+            self.rgb_led.cleanup()
         if self.api_client:
             self.api_client.close()
         
@@ -157,8 +170,12 @@ class AIArtCapture:
             
             print(f"👤 사람 감지! (신뢰도: {detections[0].confidence:.2f})")
             
-            # 카운트다운 표시
-            if detection_config.countdown_seconds > 0:
+            # 카운트다운 표시 (RGB LED 우선)
+            if self.rgb_led and led_config.rgb_enabled:
+                # RGB LED 카운트다운: 빨강 → 노랑 → 초록 → 찰칵!
+                countdown = detection_config.countdown_seconds if detection_config.countdown_seconds > 0 else 3
+                self.rgb_led.countdown_blink(count=countdown)
+            elif detection_config.countdown_seconds > 0:
                 show_countdown(
                     seconds=detection_config.countdown_seconds,
                     message="촬영까지",
@@ -232,7 +249,12 @@ class AIArtCapture:
         print(f"   - 쿨다운: {detection_config.cooldown_seconds}초")
         print(f"   - 감지 활성화: {detection_config.enabled}")
         print(f"   - 카운트다운: {detection_config.countdown_seconds}초")
-        print(f"   - LED: {'활성화' if led_config.enabled else '비활성화'}")
+        if led_config.rgb_enabled:
+            print(f"   - LED: 🌈 RGB LED (R:{led_config.rgb_red_pin}, G:{led_config.rgb_green_pin}, B:{led_config.rgb_blue_pin})")
+        elif led_config.enabled:
+            print(f"   - LED: 단색 (핀 {led_config.pin})")
+        else:
+            print(f"   - LED: 비활성화")
         print(f"   - 최소 감지영역 비율: {detection_config.min_bbox_area_ratio}")
         print(f"   - 감지영역 확대 비율: {detection_config.bbox_scale_up}")
         if stream_config.enabled and not stream_config.push_enabled:
