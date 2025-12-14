@@ -30,28 +30,31 @@ def encode_jpeg(
     numpy 배열을 JPEG 바이트로 인코딩
     
     Args:
-        frame: RGB 이미지 (numpy array)
+        frame: BGR 이미지 (numpy array, Picamera2 RGB888 출력은 실제로 BGR 순서)
         quality: JPEG 품질 (1-100)
         
     Returns:
         JPEG 인코딩된 바이트 또는 None
     """
     try:
-        if HAS_PIL:
-            image = Image.fromarray(frame)
-            buffer = io.BytesIO()
-            image.save(buffer, format="JPEG", quality=quality)
-            return buffer.getvalue()
-        elif HAS_CV2:
-            # OpenCV는 BGR 순서이므로 변환 필요
-            bgr_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+        # OpenCV를 우선 사용 (스트림과 동일한 방식으로 인코딩)
+        if HAS_CV2:
+            # cv2.imencode는 BGR 입력을 기대하며, Picamera2 출력도 BGR 순서
             success, encoded = cv2.imencode(
                 ".jpg",
-                bgr_frame,
+                frame,
                 [cv2.IMWRITE_JPEG_QUALITY, quality]
             )
             if success:
                 return encoded.tobytes()
+        
+        if HAS_PIL:
+            # PIL은 RGB를 기대하므로 BGR → RGB 변환 필요
+            rgb_frame = frame[:, :, ::-1]  # BGR → RGB
+            image = Image.fromarray(rgb_frame)
+            buffer = io.BytesIO()
+            image.save(buffer, format="JPEG", quality=quality)
+            return buffer.getvalue()
         
         print("[ImageEncode] PIL 또는 OpenCV가 필요합니다.")
         return None
@@ -66,22 +69,25 @@ def encode_png(frame: NDArray[np.uint8]) -> Optional[bytes]:
     numpy 배열을 PNG 바이트로 인코딩
     
     Args:
-        frame: RGB 이미지 (numpy array)
+        frame: BGR 이미지 (numpy array, Picamera2 RGB888 출력은 실제로 BGR 순서)
         
     Returns:
         PNG 인코딩된 바이트 또는 None
     """
     try:
+        # OpenCV를 우선 사용 (스트림과 동일한 방식으로 인코딩)
+        if HAS_CV2:
+            success, encoded = cv2.imencode(".png", frame)
+            if success:
+                return encoded.tobytes()
+        
         if HAS_PIL:
-            image = Image.fromarray(frame)
+            # PIL은 RGB를 기대하므로 BGR → RGB 변환 필요
+            rgb_frame = frame[:, :, ::-1]  # BGR → RGB
+            image = Image.fromarray(rgb_frame)
             buffer = io.BytesIO()
             image.save(buffer, format="PNG")
             return buffer.getvalue()
-        elif HAS_CV2:
-            bgr_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-            success, encoded = cv2.imencode(".png", bgr_frame)
-            if success:
-                return encoded.tobytes()
         
         print("[ImageEncode] PIL 또는 OpenCV가 필요합니다.")
         return None
