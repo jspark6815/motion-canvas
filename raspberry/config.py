@@ -51,6 +51,9 @@ class ServerConfig:
     
     @property
     def base_url(self) -> str:
+        # 포트가 80(HTTP) 또는 443(HTTPS)이면 포트 생략
+        if self.port in (80, 443):
+            return self.host
         return f"{self.host}:{self.port}"
     
     @property
