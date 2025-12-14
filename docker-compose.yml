@@ -35,6 +35,9 @@ services:
       - STREAM_SECRET=${STREAM_SECRET:-raspberry-pi-secret}
       # JWT
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-this-secret}
+      # 관리자 인증
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
     volumes:
       # 개발 시 코드 변경 반영 (프로덕션에서는 제거)
       - ./server:/app/server:ro
