@@ -23,6 +23,7 @@ from raspberry.utils.image_encode import encode_jpeg, generate_filename
 from raspberry.utils.led_controller import LEDController
 from raspberry.utils.countdown import show_countdown
 from raspberry.stream.mjpeg_server import MJPEGStreamServer
+from raspberry.stream.websocket_pusher import WebSocketStreamPusher
 
 
 class AIArtCapture:
@@ -35,6 +36,7 @@ class AIArtCapture:
         self.api_client: Optional[APIClient] = None
         self.led: Optional[LEDController] = None
         self.stream_server: Optional[MJPEGStreamServer] = None
+        self.stream_pusher: Optional[WebSocketStreamPusher] = None
         
         self._running: bool = False
         self._last_capture_time: float = 0
@@ -78,10 +80,20 @@ class AIArtCapture:
                 print(f"⚠️ 서버 연결 실패: {server_config.base_url}")
                 print("   서버가 실행 중인지 확인하세요.")
             
-            # MJPEG 스트림 서버 시작 (백그라운드)
-            if stream_config.enabled:
+            # MJPEG 스트림 서버 시작 (로컬 네트워크용, 백그라운드)
+            if stream_config.enabled and not stream_config.push_enabled:
                 self.stream_server = MJPEGStreamServer(self.camera, stream_config)
                 self.stream_server.start()
+            
+            # EC2로 스트림 푸시 (외부 네트워크용)
+            if stream_config.push_enabled:
+                self.stream_pusher = WebSocketStreamPusher(
+                    camera_source=self.camera,
+                    server_url=stream_config.push_url,
+                    secret=stream_config.push_secret,
+                    config=stream_config
+                )
+                self.stream_pusher.start()
             
             print("✅ 시스템 초기화 완료")
             return True
@@ -98,6 +110,8 @@ class AIArtCapture:
         
         if self.stream_server:
             self.stream_server.stop()
+        if self.stream_pusher:
+            self.stream_pusher.stop()
         if self.camera:
             self.camera.stop()
         if self.detector:
@@ -221,8 +235,10 @@ class AIArtCapture:
         print(f"   - LED: {'활성화' if led_config.enabled else '비활성화'}")
         print(f"   - 최소 감지영역 비율: {detection_config.min_bbox_area_ratio}")
         print(f"   - 감지영역 확대 비율: {detection_config.bbox_scale_up}")
-        if stream_config.enabled:
-            print(f"   - 스트림: http://0.0.0.0:{stream_config.port}/stream.mjpg")
+        if stream_config.enabled and not stream_config.push_enabled:
+            print(f"   - 로컬 스트림: http://0.0.0.0:{stream_config.port}/stream.mjpg")
+        if stream_config.push_enabled:
+            print(f"   - EC2 스트림 푸시: {stream_config.push_url}")
         print("   - 종료: Ctrl+C")
         print("=" * 50 + "\n")
         

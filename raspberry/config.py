@@ -91,10 +91,15 @@ class LEDConfig:
 class StreamConfig:
     """MJPEG 스트림 설정"""
     enabled: bool  # 스트림 사용 여부
-    host: str  # 스트림 서버 호스트
-    port: int  # 스트림 서버 포트
+    host: str  # 로컬 스트림 서버 호스트
+    port: int  # 로컬 스트림 서버 포트
     fps: int  # 스트림 FPS
     quality: int  # JPEG 품질 (1-100)
+    
+    # EC2 서버로 푸시 설정
+    push_enabled: bool  # EC2로 푸시 활성화
+    push_url: str  # EC2 WebSocket URL (ws://ec2-ip:8000/stream/push)
+    push_secret: str  # 인증 키
 
 
 # 환경변수에서 설정 로드
@@ -133,6 +138,10 @@ stream_config = StreamConfig(
     port=get_env_int("STREAM_PORT", 8080),
     fps=get_env_int("STREAM_FPS", 15),
     quality=get_env_int("STREAM_QUALITY", 80),
+    # EC2 서버로 스트림 푸시
+    push_enabled=get_env_bool("STREAM_PUSH_ENABLED", False),
+    push_url=get_env("STREAM_PUSH_URL", "ws://localhost:8000/stream/push"),
+    push_secret=get_env("STREAM_PUSH_SECRET", "raspberry-pi-secret"),
 )
 
 
@@ -165,6 +174,9 @@ def print_config() -> None:
     print(f"  - Port: {stream_config.port}")
     print(f"  - FPS: {stream_config.fps}")
     print(f"  - Quality: {stream_config.quality}")
+    print(f"  - Push to EC2: {stream_config.push_enabled}")
+    if stream_config.push_enabled:
+        print(f"  - Push URL: {stream_config.push_url}")
     print("=" * 50)
 
 
