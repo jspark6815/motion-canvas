@@ -1,0 +1,21 @@
+[Desktop Entry]
+# Motion Canvas autostart 파일 (GUI 터미널에서 실행)
+#
+# 설치 방법:
+# 1. 이 파일을 autostart 디렉토리에 복사:
+#    mkdir -p ~/.config/autostart
+#    cp motion-canvas.desktop ~/.config/autostart/
+#
+# 2. 라즈베리파이 재부팅
+#
+# 주의: 이 방법은 GUI 데스크톱 환경에서만 작동합니다.
+
+Type=Application
+Name=Motion Canvas
+Comment=AI Art Capture System
+Exec=lxterminal --title="Motion Canvas" -e "bash -c '$HOME/motion-canvas/raspberry/scripts/start.sh; exec bash'"
+Icon=camera
+Terminal=false
+Categories=Application;
+StartupNotify=true
+
