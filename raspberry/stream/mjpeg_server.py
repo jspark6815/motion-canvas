@@ -174,8 +174,9 @@ class MJPEGStreamServer:
                     await asyncio.sleep(frame_interval)
                     continue
                 
-                # RGB → BGR 변환 (Picamera2는 RGB, OpenCV imencode는 BGR 기대)
-                bgr_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                # Picamera2 RGB888 → 로컬 스트림에서는 변환 없이 사용
+                # (로컬 MJPEG 스트림은 RGB 그대로 인코딩해도 정상 표시됨)
+                bgr_frame = frame
                 
                 # JPEG 인코딩
                 encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), self.config.quality]

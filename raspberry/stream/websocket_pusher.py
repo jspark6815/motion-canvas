@@ -140,10 +140,9 @@ class WebSocketStreamPusher:
                         await asyncio.sleep(frame_interval)
                         continue
                     
-                    # JPEG 인코딩 (RGB→BGR 변환 필요)
-                    bgr_frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+                    # JPEG 인코딩
                     encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), self.config.quality]
-                    ret, jpg = cv2.imencode(".jpg", bgr_frame, encode_param)
+                    ret, jpg = cv2.imencode(".jpg", frame, encode_param)
                     
                     if not ret:
                         await asyncio.sleep(frame_interval)
