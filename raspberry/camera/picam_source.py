@@ -50,24 +50,17 @@ class PiCameraSource:
         if HAS_PICAMERA:
             try:
                 self._camera = Picamera2()
-                
-                # Pi 5 호환성을 위해 format을 자동 선택하도록 함
-                # BGR888은 OpenCV와 호환, RGB888은 일부 Pi 5에서 문제 발생
-                cam_config = self._camera.create_preview_configuration(
-                    main={"size": (self.config.width, self.config.height)}
+                cam_config = self._camera.create_still_configuration(
+                    main={
+                        "size": (self.config.width, self.config.height),
+                        "format": self.config.format
+                    }
                 )
                 self._camera.configure(cam_config)
                 self._camera.start()
-                
-                # 카메라 안정화 대기
-                import time
-                time.sleep(0.5)
-                
                 print(f"[PiCameraSource] 카메라 시작: {self.config.width}x{self.config.height}")
             except Exception as e:
                 print(f"[PiCameraSource] 카메라 초기화 실패: {e}")
-                import traceback
-                traceback.print_exc()
                 self._camera = None
         else:
             print("[PiCameraSource] Mock 모드: 더미 이미지 반환")
