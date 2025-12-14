@@ -162,6 +162,115 @@ def check_camera_module():
         pass
 
 
+def test_all_camera_ports():
+    """모든 카메라 포트 테스트 (Pi 5용)"""
+    print("\n" + "=" * 50)
+    print("🔌 Pi 5 카메라 포트 전체 테스트")
+    print("=" * 50)
+    
+    try:
+        from picamera2 import Picamera2
+    except ImportError:
+        print("❌ Picamera2가 설치되지 않았습니다.")
+        return
+    
+    # 전체 카메라 목록 확인
+    print("\n📋 감지된 카메라 목록:")
+    try:
+        cameras = Picamera2.global_camera_info()
+        if cameras:
+            for i, cam in enumerate(cameras):
+                print(f"   [{i}] {cam}")
+        else:
+            print("   ❌ 감지된 카메라가 없습니다.")
+    except Exception as e:
+        print(f"   ❌ 카메라 목록 조회 실패: {e}")
+    
+    # 각 카메라 번호로 시도
+    print("\n🔍 카메라 인덱스별 테스트:")
+    for cam_num in range(2):  # CAM0, CAM1
+        print(f"\n   --- 카메라 {cam_num} (CAM{cam_num}) ---")
+        try:
+            picam2 = Picamera2(camera_num=cam_num)
+            config = picam2.create_still_configuration(main={"size": (640, 480)})
+            picam2.configure(config)
+            picam2.start()
+            import time
+            time.sleep(1)
+            filename = f"test_cam{cam_num}.jpg"
+            picam2.capture_file(filename)
+            picam2.stop()
+            picam2.close()
+            print(f"   ✅ CAM{cam_num} 성공! {filename} 생성됨")
+        except IndexError:
+            print(f"   ⚠️ CAM{cam_num}: 카메라가 연결되지 않음")
+        except Exception as e:
+            print(f"   ❌ CAM{cam_num} 오류: {e}")
+
+
+def test_rpicam_command():
+    """rpicam 명령어로 테스트"""
+    print("\n" + "=" * 50)
+    print("🎬 rpicam 명령어 테스트")
+    print("=" * 50)
+    
+    import subprocess
+    
+    # rpicam-hello --list-cameras
+    print("\n실행: rpicam-hello --list-cameras")
+    try:
+        result = subprocess.run(
+            ["rpicam-hello", "--list-cameras"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        print(result.stdout)
+        if result.stderr:
+            print(f"stderr: {result.stderr}")
+    except FileNotFoundError:
+        print("❌ rpicam-hello 명령어가 없습니다.")
+        print("   libcamera-hello 시도 중...")
+        try:
+            result = subprocess.run(
+                ["libcamera-hello", "--list-cameras"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            print(result.stdout)
+            if result.stderr:
+                print(f"stderr: {result.stderr}")
+        except FileNotFoundError:
+            print("❌ libcamera-hello도 없습니다.")
+    except Exception as e:
+        print(f"❌ 오류: {e}")
+    
+    # 각 카메라로 사진 촬영 시도
+    for cam_num in range(2):
+        print(f"\n실행: rpicam-still --camera {cam_num}")
+        try:
+            result = subprocess.run(
+                ["rpicam-still", "--camera", str(cam_num), 
+                 "-o", f"rpicam_test_{cam_num}.jpg", 
+                 "-t", "1000", "--nopreview"],
+                capture_output=True,
+                text=True,
+                timeout=15
+            )
+            if result.returncode == 0:
+                print(f"   ✅ CAM{cam_num} 성공! rpicam_test_{cam_num}.jpg")
+            else:
+                print(f"   ❌ CAM{cam_num} 실패: {result.stderr}")
+        except FileNotFoundError:
+            print("   rpicam-still 명령어가 없습니다.")
+            break
+        except subprocess.TimeoutExpired:
+            print(f"   ⏱️ CAM{cam_num} 타임아웃")
+        except Exception as e:
+            print(f"   ❌ 오류: {e}")
+
+
 if __name__ == "__main__":
     print("🍓 라즈베리파이 카메라 테스트")
     print("=" * 50)
@@ -171,6 +280,12 @@ if __name__ == "__main__":
     
     # 카메라 모듈 상태
     check_camera_module()
+    
+    # rpicam 명령어 테스트
+    test_rpicam_command()
+    
+    # 전체 카메라 포트 테스트
+    test_all_camera_ports()
     
     # Picamera2 테스트
     picam_ok = test_picamera2()
