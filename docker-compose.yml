@@ -1,0 +1,76 @@
+# ==============================================
+# Motion Canvas - Docker Compose
+# ==============================================
+# 
+# 사용법:
+#   개발: docker-compose up
+#   배포: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# ==============================================
+
+services:
+  # ==============================================
+  # Backend (FastAPI)
+  # ==============================================
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: motion-canvas-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - ENV=${ENV:-development}
+      # AWS S3
+      - AWS_REGION=${AWS_REGION:-ap-northeast-2}
+      - AWS_S3_BUCKET=${AWS_S3_BUCKET}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      # Gemini API
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      # 스트림 인증
+      - STREAM_SECRET=${STREAM_SECRET:-raspberry-pi-secret}
+      # JWT
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-this-secret}
+    volumes:
+      # 개발 시 코드 변경 반영 (프로덕션에서는 제거)
+      - ./server:/app/server:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ==============================================
+  # Frontend (Nginx + React)
+  # ==============================================
+  frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=
+    container_name: motion-canvas-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# ==============================================
+# Networks
+# ==============================================
+networks:
+  default:
+    name: motion-canvas-network
+

@@ -1,0 +1,19 @@
+# Node
+node_modules/
+npm-debug.log
+
+# Build output (빌드 과정에서 생성)
+dist/
+
+# IDE
+.idea/
+.vscode/
+
+# Local environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+

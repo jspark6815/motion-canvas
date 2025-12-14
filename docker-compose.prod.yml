@@ -1,0 +1,30 @@
+# ==============================================
+# Motion Canvas - Production Override
+# ==============================================
+#
+# 사용법:
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# ==============================================
+
+services:
+  backend:
+    # 프로덕션에서는 볼륨 마운트 제거 (이미지에 포함된 코드 사용)
+    volumes: []
+    environment:
+      - ENV=production
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  frontend:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+

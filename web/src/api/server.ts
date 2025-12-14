@@ -4,8 +4,10 @@
  */
 import axios, { AxiosInstance } from 'axios';
 
-// API 기본 URL (개발 환경에서는 Vite 프록시 사용)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// API 기본 URL
+// - 프로덕션: 빈 문자열 (같은 서버에서 Nginx가 프록시)
+// - 개발: localhost:8000 또는 환경변수로 지정
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 // Axios 인스턴스 생성
 const api: AxiosInstance = axios.create({
@@ -92,17 +94,23 @@ export async function checkHealth(): Promise<HealthResponse> {
 
 /**
  * 이미지 URL을 전체 URL로 변환
+ * S3 URL은 이미 전체 경로이므로 그대로 반환
  */
 export function getImageUrl(path: string | null | undefined): string {
   if (!path) return '/placeholder.png';
   
-  // 이미 전체 URL인 경우
+  // 이미 전체 URL인 경우 (S3 등)
   if (path.startsWith('http://') || path.startsWith('https://')) {
     return path;
   }
   
-  // 상대 경로인 경우 API 기본 URL과 합성
-  return `${API_BASE_URL}${path}`;
+  // 상대 경로인 경우 (로컬 개발 환경)
+  // API_BASE_URL이 빈 문자열이면 상대 경로 그대로 사용
+  if (API_BASE_URL) {
+    return `${API_BASE_URL}${path}`;
+  }
+  
+  return path;
 }
 
 /**
@@ -139,4 +147,3 @@ export function getRelativeTime(dateString: string): string {
 }
 
 export default api;
-

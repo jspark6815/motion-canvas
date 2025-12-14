@@ -1,0 +1,29 @@
+# Python
+__pycache__
+*.pyc
+*.pyo
+venv/
+.venv/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+
+# Local environment
+.env
+.env.local
+
+# Test
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Static files (S3에 저장됨)
+static/uploads/
+static/generated/
+static/metadata/
+
+# Deploy scripts (Docker에서는 불필요)
+deploy/
+
