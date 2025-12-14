@@ -9,7 +9,6 @@ from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
 from server.routers import upload_router, analyze_router, generate_router, gallery_router, admin_router
@@ -33,11 +32,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     analyzer.initialize()
     generator.initialize()
     
-    # static 디렉토리 확인 및 생성
-    static_path = Path("static")
-    (static_path / "uploads").mkdir(parents=True, exist_ok=True)
-    (static_path / "generated").mkdir(parents=True, exist_ok=True)
-    (static_path / "metadata").mkdir(parents=True, exist_ok=True)
+    # AWS S3 연결 확인
+    s3_bucket = os.getenv("AWS_S3_BUCKET", "미설정")
+    print(f"📦 S3 버킷: {s3_bucket}")
     
     print("✅ 서버 준비 완료")
     
@@ -56,24 +53,27 @@ app = FastAPI(
 )
 
 # CORS 설정 (React 웹에서 접근 허용)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+# 환경변수에서 허용할 origin 목록 가져오기
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "").split(",")
+if not allowed_origins or allowed_origins == [""]:
+    allowed_origins = [
         "http://localhost:3000",
         "http://localhost:5173",
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5173",
-        "*"  # 개발 환경에서는 모든 origin 허용
-    ],
+    ]
+
+# 개발 환경에서는 모든 origin 허용
+if os.getenv("ENV", "development") == "development":
+    allowed_origins.append("*")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# 정적 파일 서빙
-static_path = Path("static")
-static_path.mkdir(exist_ok=True)
-app.mount("/static", StaticFiles(directory=str(static_path)), name="static")
 
 # 라우터 등록
 app.include_router(upload_router)
@@ -116,4 +116,3 @@ if __name__ == "__main__":
         reload=True,
         log_level="info"
     )
-
