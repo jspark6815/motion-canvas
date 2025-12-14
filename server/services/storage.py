@@ -1,32 +1,43 @@
 """
-이미지 저장 서비스
-파일 시스템 기반 이미지 저장 및 관리를 담당합니다.
+이미지 저장 서비스 (AWS S3 기반)
+S3를 사용한 이미지 저장 및 관리를 담당합니다.
 """
 import os
 import json
 import uuid
+import tempfile
 from pathlib import Path
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
+import boto3
+from botocore.exceptions import ClientError
+
 
 class ImageStorage:
-    """이미지 저장소 관리 클래스"""
+    """S3 기반 이미지 저장소 관리 클래스"""
     
-    def __init__(self, base_path: str = "static") -> None:
-        self.base_path = Path(base_path)
-        self.uploads_path = self.base_path / "uploads"
-        self.generated_path = self.base_path / "generated"
-        self.metadata_path = self.base_path / "metadata"
+    def __init__(self) -> None:
+        # 환경변수에서 AWS 설정 로드
+        self.bucket_name = os.getenv("AWS_S3_BUCKET", "motion-canvas-bucket")
+        self.region = os.getenv("AWS_REGION", "ap-northeast-2")
         
-        # 디렉토리 생성
-        self._ensure_directories()
+        # S3 클라이언트 초기화
+        self.s3_client = boto3.client(
+            "s3",
+            region_name=self.region,
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY")
+        )
+        
+        # S3 키 접두사
+        self.uploads_prefix = "uploads/"
+        self.generated_prefix = "generated/"
+        self.metadata_prefix = "metadata/"
     
-    def _ensure_directories(self) -> None:
-        """필요한 디렉토리 생성"""
-        self.uploads_path.mkdir(parents=True, exist_ok=True)
-        self.generated_path.mkdir(parents=True, exist_ok=True)
-        self.metadata_path.mkdir(parents=True, exist_ok=True)
+    def _get_s3_url(self, key: str) -> str:
+        """S3 객체의 공개 URL 반환"""
+        return f"https://{self.bucket_name}.s3.{self.region}.amazonaws.com/{key}"
     
     def generate_id(self) -> str:
         """고유 이미지 ID 생성"""
@@ -40,7 +51,7 @@ class ImageStorage:
         original_filename: str
     ) -> Dict[str, Any]:
         """
-        업로드된 이미지 저장
+        업로드된 이미지를 S3에 저장
         
         Args:
             image_data: 이미지 바이트 데이터
@@ -52,16 +63,31 @@ class ImageStorage:
         image_id = self.generate_id()
         extension = Path(original_filename).suffix or ".jpg"
         filename = f"{image_id}{extension}"
+        s3_key = f"{self.uploads_prefix}{filename}"
         
-        # 이미지 파일 저장
-        file_path = self.uploads_path / filename
-        file_path.write_bytes(image_data)
+        # Content-Type 결정
+        content_type = "image/jpeg"
+        if extension.lower() == ".png":
+            content_type = "image/png"
+        elif extension.lower() == ".gif":
+            content_type = "image/gif"
+        elif extension.lower() == ".webp":
+            content_type = "image/webp"
+        
+        # S3에 업로드
+        self.s3_client.put_object(
+            Bucket=self.bucket_name,
+            Key=s3_key,
+            Body=image_data,
+            ContentType=content_type
+        )
         
         # 메타데이터 생성 및 저장
         metadata = {
             "image_id": image_id,
             "original_filename": original_filename,
             "stored_filename": filename,
+            "s3_key": s3_key,
             "upload_time": datetime.now().isoformat(),
             "file_size": len(image_data),
             "analyzed": False,
@@ -70,7 +96,7 @@ class ImageStorage:
             "mood": "",
             "colors": [],
             "generated": False,
-            "generated_image_path": None,
+            "generated_s3_key": None,
             "prompt_used": None
         }
         
@@ -79,8 +105,8 @@ class ImageStorage:
         return {
             "image_id": image_id,
             "filename": filename,
-            "path": str(file_path),
-            "url": f"/static/uploads/{filename}"
+            "s3_key": s3_key,
+            "url": self._get_s3_url(s3_key)
         }
     
     async def save_generated(
@@ -90,7 +116,7 @@ class ImageStorage:
         prompt_used: str = ""
     ) -> Dict[str, Any]:
         """
-        생성된 이미지 저장
+        생성된 이미지를 S3에 저장
         
         Args:
             image_data: 생성된 이미지 바이트 데이터
@@ -102,16 +128,21 @@ class ImageStorage:
         """
         generated_id = f"{image_id}_gen"
         filename = f"{generated_id}.png"
+        s3_key = f"{self.generated_prefix}{filename}"
         
-        # 이미지 파일 저장
-        file_path = self.generated_path / filename
-        file_path.write_bytes(image_data)
+        # S3에 업로드
+        self.s3_client.put_object(
+            Bucket=self.bucket_name,
+            Key=s3_key,
+            Body=image_data,
+            ContentType="image/png"
+        )
         
         # 메타데이터 업데이트
         metadata = self._load_metadata(image_id)
         if metadata:
             metadata["generated"] = True
-            metadata["generated_image_path"] = str(file_path)
+            metadata["generated_s3_key"] = s3_key
             metadata["generated_time"] = datetime.now().isoformat()
             metadata["prompt_used"] = prompt_used
             self._save_metadata(image_id, metadata)
@@ -119,24 +150,33 @@ class ImageStorage:
         return {
             "generated_id": generated_id,
             "filename": filename,
-            "path": str(file_path),
-            "url": f"/static/generated/{filename}"
+            "s3_key": s3_key,
+            "url": self._get_s3_url(s3_key)
         }
     
     def _save_metadata(self, image_id: str, metadata: Dict[str, Any]) -> None:
-        """메타데이터 저장"""
-        metadata_file = self.metadata_path / f"{image_id}.json"
-        with open(metadata_file, 'w', encoding='utf-8') as f:
-            json.dump(metadata, f, ensure_ascii=False, indent=2)
+        """메타데이터를 S3에 저장"""
+        s3_key = f"{self.metadata_prefix}{image_id}.json"
+        self.s3_client.put_object(
+            Bucket=self.bucket_name,
+            Key=s3_key,
+            Body=json.dumps(metadata, ensure_ascii=False, indent=2),
+            ContentType="application/json"
+        )
     
     def _load_metadata(self, image_id: str) -> Optional[Dict[str, Any]]:
-        """메타데이터 로드"""
-        metadata_file = self.metadata_path / f"{image_id}.json"
-        if not metadata_file.exists():
-            return None
-        
-        with open(metadata_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        """S3에서 메타데이터 로드"""
+        s3_key = f"{self.metadata_prefix}{image_id}.json"
+        try:
+            response = self.s3_client.get_object(
+                Bucket=self.bucket_name,
+                Key=s3_key
+            )
+            return json.loads(response["Body"].read().decode("utf-8"))
+        except ClientError as e:
+            if e.response["Error"]["Code"] == "NoSuchKey":
+                return None
+            raise
     
     def update_metadata(
         self, 
@@ -157,16 +197,63 @@ class ImageStorage:
         return self._load_metadata(image_id)
     
     def get_upload_path(self, image_id: str) -> Optional[Path]:
-        """업로드된 이미지 경로 반환"""
+        """
+        업로드된 이미지를 임시 파일로 다운로드하여 경로 반환
+        (AI 분석을 위해 로컬 파일 경로가 필요한 경우)
+        """
         metadata = self._load_metadata(image_id)
         if not metadata:
             return None
         
-        filename = metadata.get("stored_filename")
-        if not filename:
+        s3_key = metadata.get("s3_key")
+        if not s3_key:
             return None
         
-        return self.uploads_path / filename
+        # 임시 파일로 다운로드
+        try:
+            response = self.s3_client.get_object(
+                Bucket=self.bucket_name,
+                Key=s3_key
+            )
+            
+            # 확장자 추출
+            extension = Path(s3_key).suffix or ".jpg"
+            
+            # 임시 파일 생성
+            temp_file = tempfile.NamedTemporaryFile(
+                suffix=extension,
+                delete=False
+            )
+            temp_file.write(response["Body"].read())
+            temp_file.close()
+            
+            return Path(temp_file.name)
+        except ClientError:
+            return None
+    
+    def get_upload_url(self, image_id: str) -> Optional[str]:
+        """업로드된 이미지의 S3 URL 반환"""
+        metadata = self._load_metadata(image_id)
+        if not metadata:
+            return None
+        
+        s3_key = metadata.get("s3_key")
+        if not s3_key:
+            return None
+        
+        return self._get_s3_url(s3_key)
+    
+    def get_generated_url(self, image_id: str) -> Optional[str]:
+        """생성된 이미지의 S3 URL 반환"""
+        metadata = self._load_metadata(image_id)
+        if not metadata or not metadata.get("generated"):
+            return None
+        
+        s3_key = metadata.get("generated_s3_key")
+        if not s3_key:
+            return None
+        
+        return self._get_s3_url(s3_key)
     
     def get_all_images(
         self, 
@@ -187,17 +274,32 @@ class ImageStorage:
         """
         all_metadata = []
         
-        for metadata_file in self.metadata_path.glob("*.json"):
-            try:
-                with open(metadata_file, 'r', encoding='utf-8') as f:
-                    metadata = json.load(f)
-                    
-                if generated_only and not metadata.get("generated"):
+        # S3에서 메타데이터 파일 목록 조회
+        paginator = self.s3_client.get_paginator("list_objects_v2")
+        pages = paginator.paginate(
+            Bucket=self.bucket_name,
+            Prefix=self.metadata_prefix
+        )
+        
+        for page_result in pages:
+            for obj in page_result.get("Contents", []):
+                key = obj["Key"]
+                if not key.endswith(".json"):
                     continue
+                
+                try:
+                    response = self.s3_client.get_object(
+                        Bucket=self.bucket_name,
+                        Key=key
+                    )
+                    metadata = json.loads(response["Body"].read().decode("utf-8"))
                     
-                all_metadata.append(metadata)
-            except Exception:
-                continue
+                    if generated_only and not metadata.get("generated"):
+                        continue
+                    
+                    all_metadata.append(metadata)
+                except Exception:
+                    continue
         
         # 업로드 시간 기준 정렬 (최신순)
         all_metadata.sort(
@@ -214,20 +316,35 @@ class ImageStorage:
     def count_images(self, generated_only: bool = False) -> int:
         """이미지 총 개수"""
         count = 0
-        for metadata_file in self.metadata_path.glob("*.json"):
-            if generated_only:
-                try:
-                    with open(metadata_file, 'r', encoding='utf-8') as f:
-                        metadata = json.load(f)
+        
+        paginator = self.s3_client.get_paginator("list_objects_v2")
+        pages = paginator.paginate(
+            Bucket=self.bucket_name,
+            Prefix=self.metadata_prefix
+        )
+        
+        for page_result in pages:
+            for obj in page_result.get("Contents", []):
+                key = obj["Key"]
+                if not key.endswith(".json"):
+                    continue
+                
+                if generated_only:
+                    try:
+                        response = self.s3_client.get_object(
+                            Bucket=self.bucket_name,
+                            Key=key
+                        )
+                        metadata = json.loads(response["Body"].read().decode("utf-8"))
                         if metadata.get("generated"):
                             count += 1
-                except Exception:
-                    continue
-            else:
-                count += 1
+                    except Exception:
+                        continue
+                else:
+                    count += 1
+        
         return count
 
 
 # 싱글톤 인스턴스
 storage = ImageStorage()
-

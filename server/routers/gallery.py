@@ -43,16 +43,12 @@ async def get_gallery(
     items = []
     for img in images:
         image_id = img.get("image_id", "")
-        stored_filename = img.get("stored_filename", "")
         
-        # URL 생성
-        original_url = f"/static/uploads/{stored_filename}" if stored_filename else ""
-        generated_url = None
+        # S3 URL 생성
+        original_url = storage.get_upload_url(image_id) or ""
+        generated_url = storage.get_generated_url(image_id) if img.get("generated") else None
         
-        if img.get("generated"):
-            generated_url = f"/static/generated/{image_id}_gen.png"
-        
-        # 썸네일 URL (현재는 원본과 동일, 추후 썸네일 생성 구현 가능)
+        # 썸네일 URL (현재는 생성된 이미지 또는 원본과 동일)
         thumbnail_url = generated_url or original_url
         
         # 업로드 시간 파싱
@@ -98,12 +94,9 @@ async def get_detail(image_id: str) -> DetailResponse:
             detail="이미지를 찾을 수 없습니다."
         )
     
-    stored_filename = metadata.get("stored_filename", "")
-    original_url = f"/static/uploads/{stored_filename}" if stored_filename else ""
-    
-    generated_url = None
-    if metadata.get("generated"):
-        generated_url = f"/static/generated/{image_id}_gen.png"
+    # S3 URL 생성
+    original_url = storage.get_upload_url(image_id) or ""
+    generated_url = storage.get_generated_url(image_id) if metadata.get("generated") else None
     
     # 시간 파싱
     def parse_time(time_str: Optional[str]) -> Optional[datetime]:
@@ -131,4 +124,3 @@ async def get_detail(image_id: str) -> DetailResponse:
         analyzed_at=analyzed_at,
         generated_at=generated_at
     )
-

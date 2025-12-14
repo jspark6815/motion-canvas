@@ -35,13 +35,14 @@ async def generate_image(request: GenerateRequest) -> GenerateResponse:
         )
     
     # 이미 생성된 경우 기존 결과 반환
-    if metadata.get("generated") and metadata.get("generated_image_path"):
+    if metadata.get("generated") and metadata.get("generated_s3_key"):
         generated_id = f"{request.image_id}_gen"
+        generated_url = storage.get_generated_url(request.image_id)
         return GenerateResponse(
             success=True,
             image_id=request.image_id,
             generated_image_id=generated_id,
-            generated_url=f"/static/generated/{generated_id}.png",
+            generated_url=generated_url or "",
             prompt_used=metadata.get("prompt_used", ""),
             created_at=datetime.fromisoformat(metadata.get("generated_time", datetime.now().isoformat()))
         )
@@ -54,7 +55,7 @@ async def generate_image(request: GenerateRequest) -> GenerateResponse:
             detail="키워드가 필요합니다. 먼저 이미지 분석을 수행하세요."
         )
     
-    # 원본 이미지 경로
+    # 원본 이미지 경로 (S3에서 임시 다운로드)
     source_image_path = storage.get_upload_path(request.image_id)
     
     # 이미지 생성
@@ -73,7 +74,7 @@ async def generate_image(request: GenerateRequest) -> GenerateResponse:
             detail=result.get("error", "이미지 생성 실패")
         )
     
-    # 생성된 이미지 저장
+    # 생성된 이미지를 S3에 저장
     save_result = await storage.save_generated(
         image_data=result["image_data"],
         image_id=request.image_id,
@@ -115,12 +116,13 @@ async def get_generated(image_id: str) -> GenerateResponse:
         )
     
     generated_id = f"{image_id}_gen"
+    generated_url = storage.get_generated_url(image_id)
+    
     return GenerateResponse(
         success=True,
         image_id=image_id,
         generated_image_id=generated_id,
-        generated_url=f"/static/generated/{generated_id}.png",
+        generated_url=generated_url or "",
         prompt_used=metadata.get("prompt_used", ""),
         created_at=datetime.fromisoformat(metadata.get("generated_time", datetime.now().isoformat()))
     )
-
