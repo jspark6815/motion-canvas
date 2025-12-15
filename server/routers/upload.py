@@ -2,13 +2,16 @@
 이미지 업로드 라우터
 라즈베리파이에서 업로드한 이미지를 처리합니다.
 """
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, UploadFile, File, HTTPException, BackgroundTasks
 
 from server.schemas import UploadResponse
 from server.services.storage import storage
 from server.services.analyzer import analyzer
 from server.services.generator import generator
+
+# 한국 시간대 (UTC+9)
+KST = timezone(timedelta(hours=9))
 
 router = APIRouter(prefix="", tags=["upload"])
 
@@ -35,7 +38,7 @@ async def process_image_pipeline(image_id: str) -> None:
             # 메타데이터 업데이트
             storage.update_metadata(image_id, {
                 "analyzed": True,
-                "analyzed_time": datetime.now().isoformat(),
+                "analyzed_time": datetime.now(KST).isoformat(),
                 "keywords": analysis_result.get("keywords", []),
                 "description": analysis_result.get("description", ""),
                 "mood": analysis_result.get("mood", ""),
@@ -117,6 +120,6 @@ async def upload_image(
         image_id=result["image_id"],
         message="업로드 성공. 백그라운드에서 AI 처리가 진행됩니다.",
         filename=result["filename"],
-        created_at=datetime.now()
+        created_at=datetime.now(KST)
     )
 

@@ -2,12 +2,15 @@
 갤러리 라우터
 웹에서 이미지 목록과 상세 정보를 조회합니다.
 """
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 
 from server.schemas import GalleryResponse, GalleryItem, DetailResponse
 from server.services.storage import storage
+
+# 한국 시간대 (UTC+9)
+KST = timezone(timedelta(hours=9))
 
 router = APIRouter(prefix="/gallery", tags=["gallery"])
 
@@ -51,12 +54,15 @@ async def get_gallery(
         # 썸네일 URL (현재는 생성된 이미지 또는 원본과 동일)
         thumbnail_url = generated_url or original_url
         
-        # 업로드 시간 파싱
+        # 업로드 시간 파싱 (KST 보장)
         upload_time_str = img.get("upload_time", "")
         try:
             created_at = datetime.fromisoformat(upload_time_str)
+            # 타임존 정보가 없으면 KST로 간주
+            if created_at.tzinfo is None:
+                created_at = created_at.replace(tzinfo=KST)
         except (ValueError, TypeError):
-            created_at = datetime.now()
+            created_at = datetime.now(KST)
         
         items.append(GalleryItem(
             id=image_id,
@@ -98,16 +104,20 @@ async def get_detail(image_id: str) -> DetailResponse:
     original_url = storage.get_upload_url(image_id) or ""
     generated_url = storage.get_generated_url(image_id) if metadata.get("generated") else None
     
-    # 시간 파싱
+    # 시간 파싱 (KST 보장)
     def parse_time(time_str: Optional[str]) -> Optional[datetime]:
         if not time_str:
             return None
         try:
-            return datetime.fromisoformat(time_str)
+            dt = datetime.fromisoformat(time_str)
+            # 타임존 정보가 없으면 KST로 간주
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=KST)
+            return dt
         except (ValueError, TypeError):
             return None
     
-    created_at = parse_time(metadata.get("upload_time")) or datetime.now()
+    created_at = parse_time(metadata.get("upload_time")) or datetime.now(KST)
     analyzed_at = parse_time(metadata.get("analyzed_time"))
     generated_at = parse_time(metadata.get("generated_time"))
     

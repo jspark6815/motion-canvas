@@ -2,13 +2,16 @@
 이미지 생성 라우터
 AI를 사용하여 새로운 이미지를 생성합니다.
 """
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from fastapi import APIRouter, HTTPException
 
 from server.schemas import GenerateRequest, GenerateResponse
 from server.services.storage import storage
 from server.services.generator import generator
+
+# 한국 시간대 (UTC+9)
+KST = timezone(timedelta(hours=9))
 
 router = APIRouter(prefix="/generate", tags=["generate"])
 
@@ -44,7 +47,7 @@ async def generate_image(request: GenerateRequest) -> GenerateResponse:
             generated_image_id=generated_id,
             generated_url=generated_url or "",
             prompt_used=metadata.get("prompt_used", ""),
-            created_at=datetime.fromisoformat(metadata.get("generated_time", datetime.now().isoformat()))
+            created_at=datetime.fromisoformat(metadata.get("generated_time", datetime.now(KST).isoformat()))
         )
     
     # 키워드 결정 (요청에 포함된 키워드 또는 분석된 키워드)
@@ -87,7 +90,7 @@ async def generate_image(request: GenerateRequest) -> GenerateResponse:
         generated_image_id=save_result["generated_id"],
         generated_url=save_result["url"],
         prompt_used=result.get("prompt_used", ""),
-        created_at=datetime.now()
+        created_at=datetime.now(KST)
     )
 
 
@@ -124,5 +127,5 @@ async def get_generated(image_id: str) -> GenerateResponse:
         generated_image_id=generated_id,
         generated_url=generated_url or "",
         prompt_used=metadata.get("prompt_used", ""),
-        created_at=datetime.fromisoformat(metadata.get("generated_time", datetime.now().isoformat()))
+        created_at=datetime.fromisoformat(metadata.get("generated_time", datetime.now(KST).isoformat()))
     )

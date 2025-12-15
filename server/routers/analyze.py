@@ -2,12 +2,15 @@
 이미지 분석 라우터
 이미지에서 키워드와 설명을 추출합니다.
 """
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, HTTPException
 
 from server.schemas import AnalyzeRequest, AnalyzeResponse
 from server.services.storage import storage
 from server.services.analyzer import analyzer
+
+# 한국 시간대 (UTC+9)
+KST = timezone(timedelta(hours=9))
 
 router = APIRouter(prefix="/analyze", tags=["analyze"])
 
@@ -64,7 +67,7 @@ async def analyze_image(request: AnalyzeRequest) -> AnalyzeResponse:
     # 메타데이터 업데이트
     storage.update_metadata(request.image_id, {
         "analyzed": True,
-        "analyzed_time": datetime.now().isoformat(),
+        "analyzed_time": datetime.now(KST).isoformat(),
         "keywords": result.get("keywords", []),
         "description": result.get("description", ""),
         "mood": result.get("mood", ""),
