@@ -326,9 +326,9 @@ export default function Home() {
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400"></span>
                   <span>환경변수 기반 설정</span>
                 </li>
-              </ul>
-            </div>
-            
+                </ul>
+              </div>
+              
             {/* EC2 서버 */}
             <div className="glass rounded-2xl p-6 border border-dark-800">
               <div className="flex items-center gap-3 mb-4">
@@ -404,7 +404,7 @@ export default function Home() {
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
                   <span>실시간 스트림 뷰어</span>
                 </li>
-              </ul>
+                </ul>
             </div>
           </div>
         </div>

@@ -80,6 +80,7 @@ class DetectionConfig:
     min_bbox_area_ratio: float  # 감지 영역 최소 비율 (프레임 대비)
     bbox_scale_up: float  # 바운딩 박스 확대 비율
     use_full_frame: bool  # 사람 감지 시 전체 프레임 업로드 (크롭 안 함)
+    use_mediapipe: bool  # MediaPipe 사용 여부 (False면 HOG 사용)
 
 
 @dataclass
@@ -95,6 +96,16 @@ class LEDConfig:
     rgb_green_pin: int  # RGB LED 초록 핀
     rgb_blue_pin: int  # RGB LED 파랑 핀
     rgb_common_anode: bool  # Common Anode 타입 여부
+
+
+@dataclass
+class PIRConfig:
+    """PIR 인체감지 센서 설정"""
+    enabled: bool  # PIR 센서 사용 여부
+    pin: int  # GPIO 핀 번호 (BCM)
+    debounce_time: float  # 디바운스 시간 (초)
+    cooldown_time: float  # 감지 후 쿨다운 시간 (초)
+    require_pir_for_capture: bool  # PIR 감지가 있어야 촬영 (HOG만으로는 촬영 안함)
 
 
 @dataclass
@@ -134,6 +145,7 @@ detection_config = DetectionConfig(
     min_bbox_area_ratio=get_env_float("MIN_BBOX_AREA_RATIO", 0.15),
     bbox_scale_up=get_env_float("BBOX_SCALE_UP", 1.3),
     use_full_frame=get_env_bool("USE_FULL_FRAME", True),  # 기본값: 전체 프레임 사용
+    use_mediapipe=get_env_bool("USE_MEDIAPIPE", True),  # 기본값: MediaPipe 사용 (설치 안되어 있으면 HOG 폴백)
 )
 
 led_config = LEDConfig(
@@ -146,6 +158,14 @@ led_config = LEDConfig(
     rgb_green_pin=get_env_int("RGB_LED_GREEN_PIN", 27),
     rgb_blue_pin=get_env_int("RGB_LED_BLUE_PIN", 22),
     rgb_common_anode=get_env_bool("RGB_LED_COMMON_ANODE", False),
+)
+
+pir_config = PIRConfig(
+    enabled=get_env_bool("PIR_ENABLED", False),  # 기본값: 비활성화
+    pin=get_env_int("PIR_PIN", 4),  # 기본: GPIO 4
+    debounce_time=get_env_float("PIR_DEBOUNCE_TIME", 0.5),
+    cooldown_time=get_env_float("PIR_COOLDOWN_TIME", 2.0),
+    require_pir_for_capture=get_env_bool("PIR_REQUIRE_FOR_CAPTURE", False),  # PIR+HOG 조합 필수 여부
 )
 
 stream_config = StreamConfig(
@@ -177,6 +197,7 @@ def print_config() -> None:
     print(f"  - Capture Interval: {camera_config.capture_interval}초")
     print(f"[Detection]")
     print(f"  - Enabled: {detection_config.enabled}")
+    print(f"  - Method: {'MediaPipe (딥러닝)' if detection_config.use_mediapipe else 'HOG (OpenCV)'}")
     print(f"  - Min Confidence: {detection_config.min_detection_confidence}")
     print(f"  - Cooldown: {detection_config.cooldown_seconds}초")
     print(f"  - Countdown: {detection_config.countdown_seconds}초")
@@ -188,6 +209,13 @@ def print_config() -> None:
     if led_config.rgb_enabled:
         print(f"  - RGB Pins: R={led_config.rgb_red_pin}, G={led_config.rgb_green_pin}, B={led_config.rgb_blue_pin}")
         print(f"  - Common Anode: {led_config.rgb_common_anode}")
+    print(f"[PIR Sensor]")
+    print(f"  - Enabled: {pir_config.enabled}")
+    if pir_config.enabled:
+        print(f"  - Pin: GPIO {pir_config.pin}")
+        print(f"  - Debounce: {pir_config.debounce_time}초")
+        print(f"  - Cooldown: {pir_config.cooldown_time}초")
+        print(f"  - Require for Capture: {pir_config.require_pir_for_capture}")
     print(f"[Stream]")
     print(f"  - Enabled: {stream_config.enabled}")
     print(f"  - Host: {stream_config.host}")

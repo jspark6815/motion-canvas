@@ -18,6 +18,11 @@ websockets>=12.0
 numpy>=1.24.0
 Pillow>=10.0.0
 
+# MediaPipe for advanced person detection (optional but recommended)
+# Provides deep learning based detection with higher accuracy
+# Falls back to HOG (OpenCV) if not installed
+mediapipe>=0.10.0
+
 # ==============================================
 # System packages (install via apt)
 # ==============================================
